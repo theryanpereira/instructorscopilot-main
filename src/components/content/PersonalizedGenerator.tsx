@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+import { UploadBoxBig } from "../ui/upload-box-big";
+import { UploadBoxSmall } from "../ui/upload-box-small";
 
 interface ContentRequest {
   topic: string;
@@ -113,50 +115,31 @@ Continue building on this foundation by exploring advanced topics.`;
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Upload Curriculum */}
-            <div className="space-y-2">
-              <Label htmlFor="curriculum-upload">Upload Curriculum (Mandatory) <span className="text-red-500">*</span></Label>
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
-                <Upload className="h-8 w-8 text-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Upload .pdf or .md file
-                </p>
-                <Button variant="outline" size="sm" onClick={() => document.getElementById('curriculum-file')?.click()}>
-                  Choose File
-                </Button>
-                <Input id="curriculum-file" type="file" accept=".pdf,.md" className="hidden" onChange={e => handleFileChange(e, ['.pdf', '.md'], 'curriculum')} />
-              </div>
-            </div>
+            <UploadBoxSmall
+              id="curriculum"
+              label="Upload Curriculum (Mandatory)"
+              fileTypesText="Upload .pdf or .md file"
+              allowedTypes={['.pdf', '.md']}
+              onFileChange={handleFileChange}
+            />
 
-            {/* Upload Student Profile */}
-            <div className="space-y-2">
-              <Label htmlFor="student-profile-upload">Upload Student Profile (Optional)</Label>
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
-                <Upload className="h-8 w-8 text-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Upload .csv file
-                </p>
-                <Button variant="outline" size="sm" onClick={() => document.getElementById('student-profile-file')?.click()}>
-                  Choose File
-                </Button>
-                <Input id="student-profile-file" type="file" accept=".csv" className="hidden" onChange={e => handleFileChange(e, ['.csv'], 'student profile')} />
-              </div>
-            </div>
+            <UploadBoxSmall
+              id="student-profile"
+              label="Upload Student Profile (Optional)"
+              fileTypesText="Upload .csv file"
+              allowedTypes={['.csv']}
+              onFileChange={handleFileChange}
+              optional
+            />
 
-            {/* Upload Teaching Style */}
-            <div className="space-y-2">
-              <Label htmlFor="teaching-style-upload">Upload Teaching Style (Optional)</Label>
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
-                <Upload className="h-8 w-8 text-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Upload .json or .md file
-                </p>
-                <Button variant="outline" size="sm" onClick={() => document.getElementById('teaching-style-file')?.click()}>
-                  Choose File
-                </Button>
-                <Input id="teaching-style-file" type="file" accept=".json,.md" className="hidden" onChange={e => handleFileChange(e, ['.json', '.md'], 'teaching style')} />
-              </div>
-            </div>
+            <UploadBoxSmall
+              id="teaching-style"
+              label="Upload Teaching Style (Optional)"
+              fileTypesText="Upload .json or .md file"
+              allowedTypes={['.json', '.md']}
+              onFileChange={handleFileChange}
+              optional
+            />
             
             {/* Describe Teaching Style */}
             <div className="space-y-2">
@@ -180,18 +163,14 @@ Continue building on this foundation by exploring advanced topics.`;
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Topic for Content (Optional) */}
-              <div className="space-y-2">
-                <Label htmlFor="topic-upload">Topic for Content (Optional)</Label>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
-                  <Upload className="h-8 w-8 text-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">Upload .pdf or .md</p>
-                  <Button variant="outline" size="sm" onClick={() => document.getElementById('topic-file')?.click()}>
-                    Choose File
-                  </Button>
-                  <Input id="topic-file" type="file" accept=".pdf,.md" className="hidden" onChange={e => handleFileChange(e, ['.pdf', '.md'], 'topic')} />
-                </div>
-              </div>
+              <UploadBoxBig
+                id="topic"
+                label="Topic for Content (Optional)"
+                fileTypesText="Upload .pdf or .md"
+                allowedTypes={['.pdf', '.md']}
+                onFileChange={handleFileChange}
+                optional
+              />
 
               {/* Content Difficulty */}
               <div className="space-y-2">

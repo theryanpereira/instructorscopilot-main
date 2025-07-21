@@ -1,24 +1,34 @@
-# Logs
-logs
+# Node.js
+node_modules/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Vite
+/dist
+.vite/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# macOS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+
+# npm
+npm-debug.log*
+package-lock.json # This project uses npm, so package-lock.json is usually tracked. If you want to ignore it, uncomment this line.
+
+# bun
+bun.lockb # This project uses bun, so bun.lockb is usually tracked. If you want to ignore it, uncomment this line.
+
+# Supabase
+supabase/.supabase/
+supabase/config.toml # Consider ignoring if it contains local-only configurations
+src/integrations/supabase/types.ts # This file might be auto-generated, consider ignoring if it is.
+
+# IDEs
+.vscode/
+.idea/
+
+# Other
+*.tgz
