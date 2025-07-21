@@ -14,7 +14,7 @@ import { UploadBoxSmall } from "../ui/upload-box-small";
 interface ContentRequest {
   topic: string;
   contentType: 'lesson' | 'explanation' | 'practice' | 'summary';
-  difficulty: number;
+  difficulty: number | null;
   duration: number;
 }
 
@@ -37,7 +37,7 @@ export function PersonalizedGenerator() {
   const [contentRequest, setContentRequest] = useState<ContentRequest>({
     topic: '',
     contentType: 'lesson',
-    difficulty: 1,
+    difficulty: null,
     duration: 30,
   });
 
@@ -159,26 +159,29 @@ Continue building on this foundation by exploring advanced topics.`;
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-foreground" />
-                Content Request
+                Content Requirements
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <UploadBoxBig
-                id="topic"
-                label="Topic for Content (Optional)"
-                fileTypesText="Upload .pdf or .md"
-                allowedTypes={['.pdf', '.md']}
-                onFileChange={handleFileChange}
-                optional
-              />
+              {/* Topic for Content (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="topic-for-content">Topic for course content</Label>
+                <Textarea 
+                  id="topic-for-content"
+                  placeholder="E.g., Introduction to Quantum Physics, Basics of Machine Learning, History of Ancient Rome"
+                  rows={2}
+                  value={contentRequest.topic}
+                  onChange={(e) => setContentRequest(prev => ({ ...prev, topic: e.target.value }))}
+                />
+              </div>
 
               {/* Content Difficulty */}
               <div className="space-y-2">
                 <Label htmlFor="difficulty">Content Difficulty</Label>
                 <Select
-                  value={contentRequest.difficulty.toString()}
+                  value={contentRequest.difficulty !== null ? contentRequest.difficulty.toString() : ''}
                   onValueChange={value => {
-                    let difficulty = 1;
+                    let difficulty: number | null = null;
                     if (value === '1') difficulty = 1;
                     else if (value === '2') difficulty = 2;
                     else if (value === '3') difficulty = 3;
@@ -186,14 +189,27 @@ Continue building on this foundation by exploring advanced topics.`;
                   }}
                 >
                   <SelectTrigger id="difficulty">
-                    <SelectValue placeholder="Select difficulty" />
+                    <SelectValue placeholder="Select difficulty level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Basic + Fundamentals</SelectItem>
+                    <SelectItem value="1">Foundational</SelectItem>
                     <SelectItem value="2">Intermediate</SelectItem>
                     <SelectItem value="3">Advanced</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Difficulty Descriptions */}
+              <div className="space-y-4 text-sm">
+                <p>
+                  <span className="font-semibold text-foreground">Foundational:</span> No prior knowledge needed. Teaches core concepts, terms, and workflows with relatable examples and visuals. Ideal for first-timers or early learners.
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">Intermediate:</span> Assumes basic familiarity. Builds skills through applied understanding, structured breakdowns, and real-world use cases. Great for those looking to deepen their grasp.
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">Advanced:</span> Designed for experienced learners. Explores systems, edge cases, research insights, and practical implementation challenges in depth.
+                </p>
               </div>
 
               {/* Generate Button */}
