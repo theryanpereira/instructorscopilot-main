@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Upload, FileText, BookOpen, CheckCircle, Play } from "lucide-react";
+import { ArrowRight, Upload, FileText, BookOpen, CheckCircle, Play, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,9 +27,7 @@ const Onboarding = () => {
     { id: "speed", label: "Speed up content creation", icon: "⚡" },
     { id: "personalize", label: "Personalize learning paths", icon: "🎯" },
     { id: "tone", label: "Maintain my teaching voice", icon: "🎨" },
-    { id: "export", label: "Export to Google Docs/LMS", icon: "📤" },
-    { id: "quizzes", label: "Generate quizzes & assessments", icon: "📝" },
-    { id: "current", label: "Keep content current", icon: "🔄" }
+    { id: "quizzes", label: "Generate quizzes & assessments", icon: "📝" }
   ];
 
   const handleGoalToggle = (goalId: string) => {
@@ -95,9 +93,9 @@ const Onboarding = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, experience: e.target.value }))}
                 >
                   <option value="">Select your experience level</option>
-                  <option value="beginner">New to teaching (0-1 years)</option>
-                  <option value="intermediate">Some experience (2-5 years)</option>
-                  <option value="experienced">Very experienced (5+ years)</option>
+                  <option value="beginner">Beginner  (0 - 3 yrs)</option>
+                  <option value="intermediate">Intermediate  (4 - 9 yrs)</option>
+                  <option value="advanced">Advanced (10+ yrs)</option>
                 </select>
               </div>
             </CardContent>
@@ -128,7 +126,7 @@ const Onboarding = () => {
                     Choose Files
                   </Button>
                   <p className="text-xs text-muted-foreground mt-2">
-                    PDF, DOC, TXT files accepted
+                    Only PDF files accepted
                   </p>
                 </div>
               </div>
@@ -186,50 +184,22 @@ const Onboarding = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Play className="h-6 w-6 text-primary" />
-                You're all set!
+                <Users className="h-6 w-6 text-primary" />
+                Set Up Student Intake (optional)
               </CardTitle>
-              <CardDescription>
-                Your Masterplan account is ready. Here's what you can do next:
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4">
-                <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-primary">1</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Create your first course</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Use the Course Creator to generate lesson plans and content
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-primary">2</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Set up student intake</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Create forms to personalize content for each student
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-primary">3</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Export to Google Docs</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Push your content directly to your favorite tools
-                    </p>
-                  </div>
-                </div>
+               <p className="text-muted-foreground">
+                Upload a .csv file with student information to personalize content for each student.
+              </p>
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  Drag and drop a .csv file here, or click to upload
+                </p>
+                <Button variant="outline">
+                  Upload CSV
+                </Button>
               </div>
             </CardContent>
           </Card>

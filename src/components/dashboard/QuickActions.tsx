@@ -21,30 +21,6 @@ const actions = [
     variant: "default" as const,
     action: "upload-tone",
   },
-  {
-    title: "Student Intake",
-    shortTitle: "Students",
-    description: "Create personalized learning forms",
-    icon: Users,
-    variant: "default" as const,
-    action: "student-intake",
-  },
-  {
-    title: "Content Library",
-    shortTitle: "Library",
-    description: "Browse your existing materials",
-    icon: FileText,
-    variant: "default" as const,
-    action: "library",
-  },
-  {
-    title: "Export to Google",
-    shortTitle: "Export",
-    description: "Send content to Google Docs",
-    icon: Download,
-    variant: "default" as const,
-    action: "export-google",
-  },
 ];
 
 export function QuickActions() {
@@ -87,7 +63,7 @@ export function QuickActions() {
       <CardContent>
         <TooltipProvider>
           <div
-            className="flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-5 sm:gap-3 sm:overflow-visible"
+            className="flex gap-2 justify-center sm:justify-start overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {actions.map((action) => (
