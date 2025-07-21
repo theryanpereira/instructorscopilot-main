@@ -240,11 +240,8 @@ Continue building on this foundation by exploring advanced topics.`;
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-foreground" />
-                Generated Content
+                Course Content Preview
               </CardTitle>
-              <CardDescription>
-                AI-personalized content based on the student profile
-              </CardDescription>
             </CardHeader>
             <CardContent>
               {generatedContent ? (
