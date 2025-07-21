@@ -1,67 +1,46 @@
 import { useState } from "react";
-import { Wand2, User, BookOpen, Target, Brain, Sparkles } from "lucide-react";
+import { Wand2, Upload, BookOpen, Target, Brain, Sparkles, FilePlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-
-interface StudentProfile {
-  learningStyle: 'visual' | 'auditory' | 'kinesthetic' | 'reading';
-  skillLevel: 'beginner' | 'intermediate' | 'advanced';
-  interests: string[];
-  previousKnowledge: string;
-  goals: string;
-}
 
 interface ContentRequest {
   topic: string;
   contentType: 'lesson' | 'explanation' | 'practice' | 'summary';
   difficulty: number;
   duration: number;
-  personalizations: string[];
 }
 
 export function PersonalizedGenerator() {
   const { toast } = useToast();
-  const [studentProfile, setStudentProfile] = useState<StudentProfile>({
-    learningStyle: 'visual',
-    skillLevel: 'intermediate',
-    interests: [],
-    previousKnowledge: '',
-    goals: ''
-  });
+  
+  // File validation handlers
+  const handleFileChange = (e, allowedTypes, label) => {
+    const file = e.target.files?.[0];
+    if (file && !allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) {
+      toast({
+        title: 'Invalid file type',
+        description: `Please upload a valid ${label} file (${allowedTypes.join(', ')})`,
+        variant: 'destructive',
+      });
+      e.target.value = '';
+    }
+  };
 
   const [contentRequest, setContentRequest] = useState<ContentRequest>({
     topic: '',
     contentType: 'lesson',
-    difficulty: 5,
+    difficulty: 1,
     duration: 30,
-    personalizations: []
   });
 
   const [generatedContent, setGeneratedContent] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
-
-  const addInterest = (interest: string) => {
-    if (interest.trim() && !studentProfile.interests.includes(interest.trim())) {
-      setStudentProfile(prev => ({
-        ...prev,
-        interests: [...prev.interests, interest.trim()]
-      }));
-    }
-  };
-
-  const removeInterest = (interest: string) => {
-    setStudentProfile(prev => ({
-      ...prev,
-      interests: prev.interests.filter(i => i !== interest)
-    }));
-  };
 
   const generatePersonalizedContent = async () => {
     if (!contentRequest.topic.trim()) {
@@ -82,20 +61,21 @@ export function PersonalizedGenerator() {
       const mockContent = `# ${contentRequest.topic}
 
 ## Learning Objectives
-Based on your ${studentProfile.skillLevel} level and ${studentProfile.learningStyle} learning style, this ${contentRequest.contentType} will help you:
+This ${contentRequest.contentType} will help you:
 
 - Understand the core concepts of ${contentRequest.topic}
-- Apply knowledge through ${studentProfile.learningStyle === 'kinesthetic' ? 'hands-on activities' : 'targeted exercises'}
-- Connect this topic to your interests: ${studentProfile.interests.slice(0, 2).join(', ')}
+- Apply knowledge through targeted exercises
 
 ## Content Overview
-${generatePersonalizedText()}
+This lesson includes diagrams, charts, and visual examples to help you see the concepts clearly.
 
 ## Practice Activities
-${generateActivities()}
+- Complete written exercises
+- Analyze text-based case studies
+- Write reflective summaries
 
 ## Next Steps
-Continue building on this foundation by exploring advanced topics that align with your goal: "${studentProfile.goals}"`;
+Continue building on this foundation by exploring advanced topics.`;
 
       setGeneratedContent(mockContent);
       
@@ -114,28 +94,6 @@ Continue building on this foundation by exploring advanced topics that align wit
     }
   };
 
-  const generatePersonalizedText = () => {
-    const styles = {
-      visual: "This lesson includes diagrams, charts, and visual examples to help you see the concepts clearly.",
-      auditory: "Listen to the explanations and discuss the concepts to reinforce your understanding.",
-      kinesthetic: "Engage with hands-on activities and real-world applications to learn by doing.",
-      reading: "Detailed written explanations and reading materials provide comprehensive coverage."
-    };
-
-    return styles[studentProfile.learningStyle];
-  };
-
-  const generateActivities = () => {
-    const activities = {
-      visual: "- Create mind maps and flowcharts\n- Analyze visual case studies\n- Draw concept diagrams",
-      auditory: "- Participate in group discussions\n- Record and review explanations\n- Use verbal repetition techniques",
-      kinesthetic: "- Complete hands-on simulations\n- Build physical models\n- Practice real-world applications",
-      reading: "- Complete written exercises\n- Analyze text-based case studies\n- Write reflective summaries"
-    };
-
-    return activities[studentProfile.learningStyle];
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -145,241 +103,185 @@ Continue building on this foundation by exploring advanced topics that align wit
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Student Profile */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Required Inputs - now on the left */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Student Profile
+              <FilePlus className="h-5 w-5 text-foreground" />
+              Required Input
             </CardTitle>
-            <CardDescription>
-              Define the learner's characteristics and preferences
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Learning Style</Label>
-              <Select 
-                value={studentProfile.learningStyle} 
-                onValueChange={(value: StudentProfile['learningStyle']) => 
-                  setStudentProfile(prev => ({ ...prev, learningStyle: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="visual">Visual Learner</SelectItem>
-                  <SelectItem value="auditory">Auditory Learner</SelectItem>
-                  <SelectItem value="kinesthetic">Kinesthetic Learner</SelectItem>
-                  <SelectItem value="reading">Reading/Writing Learner</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Skill Level</Label>
-              <Select 
-                value={studentProfile.skillLevel} 
-                onValueChange={(value: StudentProfile['skillLevel']) => 
-                  setStudentProfile(prev => ({ ...prev, skillLevel: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Interests</Label>
-              <div className="flex flex-wrap gap-1 mb-2">
-                {studentProfile.interests.map((interest, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="secondary" 
-                    className="cursor-pointer"
-                    onClick={() => removeInterest(interest)}
-                  >
-                    {interest} ×
-                  </Badge>
-                ))}
-              </div>
-              <Input 
-                placeholder="Add interests (press Enter)"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    addInterest(e.currentTarget.value);
-                    e.currentTarget.value = '';
-                  }
-                }}
-              />
-            </div>
-
-            <div>
-              <Label>Previous Knowledge</Label>
-              <Textarea 
-                placeholder="What does the student already know about this subject?"
-                value={studentProfile.previousKnowledge}
-                onChange={(e) => setStudentProfile(prev => ({ 
-                  ...prev, 
-                  previousKnowledge: e.target.value 
-                }))}
-              />
-            </div>
-
-            <div>
-              <Label>Learning Goals</Label>
-              <Textarea 
-                placeholder="What does the student want to achieve?"
-                value={studentProfile.goals}
-                onChange={(e) => setStudentProfile(prev => ({ 
-                  ...prev, 
-                  goals: e.target.value 
-                }))}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Content Request */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Content Request
-            </CardTitle>
-            <CardDescription>
-              Specify what content you want to generate
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Topic</Label>
-              <Input 
-                placeholder="Enter the topic or subject"
-                value={contentRequest.topic}
-                onChange={(e) => setContentRequest(prev => ({ 
-                  ...prev, 
-                  topic: e.target.value 
-                }))}
-              />
-            </div>
-
-            <div>
-              <Label>Content Type</Label>
-              <Select 
-                value={contentRequest.contentType} 
-                onValueChange={(value: ContentRequest['contentType']) => 
-                  setContentRequest(prev => ({ ...prev, contentType: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lesson">Full Lesson</SelectItem>
-                  <SelectItem value="explanation">Concept Explanation</SelectItem>
-                  <SelectItem value="practice">Practice Exercises</SelectItem>
-                  <SelectItem value="summary">Topic Summary</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Difficulty Level: {contentRequest.difficulty}/10</Label>
-              <Slider
-                value={[contentRequest.difficulty]}
-                onValueChange={(value) => setContentRequest(prev => ({ 
-                  ...prev, 
-                  difficulty: value[0] 
-                }))}
-                max={10}
-                min={1}
-                step={1}
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <Label>Duration (minutes)</Label>
-              <Input 
-                type="number"
-                min="5"
-                max="120"
-                value={contentRequest.duration}
-                onChange={(e) => setContentRequest(prev => ({ 
-                  ...prev, 
-                  duration: parseInt(e.target.value) || 30 
-                }))}
-              />
-            </div>
-
-            <Button 
-              onClick={generatePersonalizedContent}
-              disabled={isGenerating}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <Brain className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="mr-2 h-4 w-4" />
-                  Generate Content
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Generated Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              Generated Content
-            </CardTitle>
-            <CardDescription>
-              AI-personalized content based on the student profile
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {generatedContent ? (
-              <div className="space-y-4">
-                <div className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-sm">
-                    {generatedContent}
-                  </pre>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Target className="mr-2 h-4 w-4" />
-                    Customize Further
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Export Content
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Brain className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  Generated content will appear here
+          <CardContent className="space-y-6">
+            {/* Upload Curriculum */}
+            <div className="space-y-2">
+              <Label htmlFor="curriculum-upload">Upload Curriculum (Mandatory) <span className="text-red-500">*</span></Label>
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                <Upload className="h-8 w-8 text-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  Upload .pdf or .md file
                 </p>
+                <Button variant="outline" size="sm" onClick={() => document.getElementById('curriculum-file')?.click()}>
+                  Choose File
+                </Button>
+                <Input id="curriculum-file" type="file" accept=".pdf,.md" className="hidden" onChange={e => handleFileChange(e, ['.pdf', '.md'], 'curriculum')} />
               </div>
-            )}
+            </div>
+
+            {/* Upload Student Profile */}
+            <div className="space-y-2">
+              <Label htmlFor="student-profile-upload">Upload Student Profile (Optional)</Label>
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                <Upload className="h-8 w-8 text-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  Upload .csv file
+                </p>
+                <Button variant="outline" size="sm" onClick={() => document.getElementById('student-profile-file')?.click()}>
+                  Choose File
+                </Button>
+                <Input id="student-profile-file" type="file" accept=".csv" className="hidden" onChange={e => handleFileChange(e, ['.csv'], 'student profile')} />
+              </div>
+            </div>
+
+            {/* Upload Teaching Style */}
+            <div className="space-y-2">
+              <Label htmlFor="teaching-style-upload">Upload Teaching Style (Optional)</Label>
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                <Upload className="h-8 w-8 text-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  Upload .json or .md file
+                </p>
+                <Button variant="outline" size="sm" onClick={() => document.getElementById('teaching-style-file')?.click()}>
+                  Choose File
+                </Button>
+                <Input id="teaching-style-file" type="file" accept=".json,.md" className="hidden" onChange={e => handleFileChange(e, ['.json', '.md'], 'teaching style')} />
+              </div>
+            </div>
+            
+            {/* Describe Teaching Style */}
+            <div className="space-y-2">
+              <Label htmlFor="teaching-style-description">Describe Your Teaching Style (Optional)</Label>
+              <Textarea 
+                id="teaching-style-description"
+                placeholder="E.g., I like to use real-world examples, keep things conversational, and break complex ideas into simple, step-by-step explanations."
+                rows={4}
+              />
+            </div>
           </CardContent>
         </Card>
+
+        {/* Content Request and Output - now on the right */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-foreground" />
+                Content Request
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Topic for Content (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="topic-upload">Topic for Content (Optional)</Label>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center">
+                  <Upload className="h-8 w-8 text-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">Upload .pdf or .md</p>
+                  <Button variant="outline" size="sm" onClick={() => document.getElementById('topic-file')?.click()}>
+                    Choose File
+                  </Button>
+                  <Input id="topic-file" type="file" accept=".pdf,.md" className="hidden" onChange={e => handleFileChange(e, ['.pdf', '.md'], 'topic')} />
+                </div>
+              </div>
+
+              {/* Content Difficulty */}
+              <div className="space-y-2">
+                <Label htmlFor="difficulty">Content Difficulty</Label>
+                <Select
+                  value={contentRequest.difficulty.toString()}
+                  onValueChange={value => {
+                    let difficulty = 1;
+                    if (value === '1') difficulty = 1;
+                    else if (value === '2') difficulty = 2;
+                    else if (value === '3') difficulty = 3;
+                    setContentRequest(prev => ({ ...prev, difficulty }));
+                  }}
+                >
+                  <SelectTrigger id="difficulty">
+                    <SelectValue placeholder="Select difficulty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Basic + Fundamentals</SelectItem>
+                    <SelectItem value="2">Intermediate</SelectItem>
+                    <SelectItem value="3">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Generate Button */}
+              <Button 
+                onClick={generatePersonalizedContent}
+                disabled={isGenerating}
+                className="w-full"
+              >
+                {isGenerating ? (
+                  <>
+                    <Brain className="mr-2 h-4 w-4 animate-spin text-foreground" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4 text-foreground" />
+                    Generate Content
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Generated Content - now below both panels, centered and full width */}
+      <div className="flex justify-center">
+        <div className="w-full max-w-4xl">
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-foreground" />
+                Generated Content
+              </CardTitle>
+              <CardDescription>
+                AI-personalized content based on the student profile
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {generatedContent ? (
+                <div className="space-y-4">
+                  <div className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm">
+                      {generatedContent}
+                    </pre>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Target className="mr-2 h-4 w-4 text-foreground" />
+                      Customize Further
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Export Content
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Brain className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    Generated content will appear here
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

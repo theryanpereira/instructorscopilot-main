@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { Footer } from "./Footer";
 import { UserGuide } from "@/components/UserGuide";
 import { Outlet, useLocation } from "react-router-dom";
 
@@ -39,6 +40,7 @@ export function Layout({ children }: LayoutProps) {
         </main>
       </div>
       <UserGuide />
+      <Footer />
     </div>
   );
 }

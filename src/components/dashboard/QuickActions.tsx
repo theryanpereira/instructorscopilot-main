@@ -53,7 +53,7 @@ export function QuickActions() {
     <Card className="bg-gradient-card shadow-elegant">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
+          <Zap className="h-5 w-5 text-foreground" />
           Quick Actions
         </CardTitle>
         <CardDescription>
@@ -75,7 +75,7 @@ export function QuickActions() {
                       className="flex flex-col items-center justify-center gap-1 px-2 py-4 w-full h-auto min-h-[72px] sm:min-h-[80px] text-xs font-medium"
                       onClick={() => handleAction(action.action)}
                     >
-                      <action.icon className="h-6 w-6 mb-1" />
+                      <action.icon className="h-6 w-6 mb-1 text-foreground" />
                       <span className="truncate text-center w-full">{action.shortTitle}</span>
                     </Button>
                   </TooltipTrigger>

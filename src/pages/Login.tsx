@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/layout/Footer";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -241,6 +242,7 @@ const Login = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -88,7 +88,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   collapsed && "justify-center px-2"
                 )}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon className="h-5 w-5 flex-shrink-0 text-foreground" />
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{item.name}</div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { Footer } from "@/components/layout/Footer";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -196,26 +197,7 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12">
-        <div className="container px-4">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-                <BookOpen className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Masterplan</h3>
-                <p className="text-sm text-muted-foreground">AI Copilot for Instructors</p>
-              </div>
-            </div>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <a href="/privacy" className="hover:text-foreground">Privacy</a>
-              <a href="/terms" className="hover:text-foreground">Terms</a>
-              <a href="/support" className="hover:text-foreground">Support</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

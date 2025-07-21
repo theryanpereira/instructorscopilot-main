@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/layout/Footer";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -19,6 +20,19 @@ const Onboarding = () => {
     toneSample: "",
     goals: []
   });
+
+  // File validation handler
+  const handleFileChange = (e, allowedTypes, label) => {
+    const file = e.target.files?.[0];
+    if (file && !allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) {
+      toast({
+        title: 'Invalid file type',
+        description: `Please upload a valid ${label} file (${allowedTypes.join(', ')})`,
+        variant: 'destructive',
+      });
+      e.target.value = '';
+    }
+  };
 
   const totalSteps = 4;
   const progress = (currentStep / totalSteps) * 100;
@@ -122,9 +136,10 @@ const Onboarding = () => {
                   <p className="text-sm text-muted-foreground mb-2">
                     Drag and drop files here, or click to browse
                   </p>
-                  <Button variant="outline" size="sm">
-                    Choose Files
+                  <Button variant="outline" size="sm" onClick={() => document.getElementById('onboarding-pdf-upload')?.click()}>
+                    Choose File
                   </Button>
+                  <Input id="onboarding-pdf-upload" type="file" accept=".pdf" className="hidden" onChange={e => handleFileChange(e, ['.pdf'], 'PDF')} />
                   <p className="text-xs text-muted-foreground mt-2">
                     Only PDF files accepted
                   </p>
@@ -197,9 +212,10 @@ const Onboarding = () => {
                 <p className="text-sm text-muted-foreground mb-2">
                   Drag and drop a .csv file here, or click to upload
                 </p>
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => document.getElementById('onboarding-csv-upload')?.click()}>
                   Upload CSV
                 </Button>
+                <Input id="onboarding-csv-upload" type="file" accept=".csv" className="hidden" onChange={e => handleFileChange(e, ['.csv'], 'CSV')} />
               </div>
             </CardContent>
           </Card>
@@ -262,6 +278,7 @@ const Onboarding = () => {
           </Button>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
