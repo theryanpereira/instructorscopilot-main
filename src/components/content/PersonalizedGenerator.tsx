@@ -99,9 +99,9 @@ Continue building on this foundation by exploring advanced topics.`;
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Personalized Content Generator</h1>
+        <h1 className="text-3xl font-bold">Course Content Generator</h1>
         <p className="text-muted-foreground mt-1">
-          Create AI-powered content tailored to individual learning preferences
+          AI-accelerated course generation
         </p>
       </div>
 
@@ -117,7 +117,7 @@ Continue building on this foundation by exploring advanced topics.`;
           <CardContent className="space-y-6">
             <UploadBoxSmall
               id="curriculum"
-              label="Upload Curriculum (Mandatory)"
+              label="Upload curriculum (mandatory)"
               fileTypesText="Upload .pdf or .md file"
               allowedTypes={['.pdf', '.md']}
               onFileChange={handleFileChange}
@@ -125,7 +125,7 @@ Continue building on this foundation by exploring advanced topics.`;
 
             <UploadBoxSmall
               id="student-profile"
-              label="Upload Student Profile (Optional)"
+              label="Upload student profile (optional)"
               fileTypesText="Upload .csv file"
               allowedTypes={['.csv']}
               onFileChange={handleFileChange}
@@ -134,7 +134,7 @@ Continue building on this foundation by exploring advanced topics.`;
 
             <UploadBoxSmall
               id="teaching-style"
-              label="Upload Teaching Style (Optional)"
+              label="Upload teaching style (optional)"
               fileTypesText="Upload .json or .md file"
               allowedTypes={['.json', '.md']}
               onFileChange={handleFileChange}
@@ -143,7 +143,7 @@ Continue building on this foundation by exploring advanced topics.`;
             
             {/* Describe Teaching Style */}
             <div className="space-y-2">
-              <Label htmlFor="teaching-style-description">Describe Your Teaching Style (Optional)</Label>
+              <Label htmlFor="teaching-style-description">Describe your teaching style (optional)</Label>
               <Textarea 
                 id="teaching-style-description"
                 placeholder="E.g., I like to use real-world examples, keep things conversational, and break complex ideas into simple, step-by-step explanations."
@@ -154,90 +154,88 @@ Continue building on this foundation by exploring advanced topics.`;
         </Card>
 
         {/* Content Request and Output - now on the right */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-foreground" />
-                Content Requirements
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Topic for Content (Optional) */}
-              <div className="space-y-2">
-                <Label htmlFor="topic-for-content">Topic for course content</Label>
-                <Textarea 
-                  id="topic-for-content"
-                  placeholder="E.g., Introduction to Quantum Physics, Basics of Machine Learning, History of Ancient Rome"
-                  rows={2}
-                  value={contentRequest.topic}
-                  onChange={(e) => setContentRequest(prev => ({ ...prev, topic: e.target.value }))}
-                />
-              </div>
+        <Card> {/* Content Requirements Card */}
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-foreground" />
+              Content Requirements
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Topic for Content (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="topic-for-content">Topic for course content</Label>
+              <Textarea 
+                id="topic-for-content"
+                placeholder="E.g., Introduction to Quantum Physics, Basics of Machine Learning, History of Ancient Rome"
+                rows={2}
+                value={contentRequest.topic}
+                onChange={(e) => setContentRequest(prev => ({ ...prev, topic: e.target.value }))}
+              />
+            </div>
 
-              {/* Content Difficulty */}
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Content Difficulty</Label>
-                <Select
-                  value={contentRequest.difficulty !== null ? contentRequest.difficulty.toString() : ''}
-                  onValueChange={value => {
-                    let difficulty: number | null = null;
-                    if (value === '1') difficulty = 1;
-                    else if (value === '2') difficulty = 2;
-                    else if (value === '3') difficulty = 3;
-                    setContentRequest(prev => ({ ...prev, difficulty }));
-                  }}
-                >
-                  <SelectTrigger id="difficulty">
-                    <SelectValue placeholder="Select difficulty level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Foundational</SelectItem>
-                    <SelectItem value="2">Intermediate</SelectItem>
-                    <SelectItem value="3">Advanced</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Difficulty Descriptions */}
-              <div className="space-y-4 text-sm">
-                <p>
-                  <span className="font-semibold text-foreground">Foundational:</span> No prior knowledge needed. Teaches core concepts, terms, and workflows with relatable examples and visuals. Ideal for first-timers or early learners.
-                </p>
-                <p>
-                  <span className="font-semibold text-foreground">Intermediate:</span> Assumes basic familiarity. Builds skills through applied understanding, structured breakdowns, and real-world use cases. Great for those looking to deepen their grasp.
-                </p>
-                <p>
-                  <span className="font-semibold text-foreground">Advanced:</span> Designed for experienced learners. Explores systems, edge cases, research insights, and practical implementation challenges in depth.
-                </p>
-              </div>
-
-              {/* Generate Button */}
-              <Button 
-                onClick={generatePersonalizedContent}
-                disabled={isGenerating}
-                className="w-full"
+            {/* Content Difficulty */}
+            <div className="space-y-2">
+              <Label htmlFor="difficulty">Content difficulty</Label>
+              <Select
+                value={contentRequest.difficulty !== null ? contentRequest.difficulty.toString() : ''}
+                onValueChange={value => {
+                  let difficulty: number | null = null;
+                  if (value === '1') difficulty = 1;
+                  else if (value === '2') difficulty = 2;
+                  else if (value === '3') difficulty = 3;
+                  setContentRequest(prev => ({ ...prev, difficulty }));
+                }}
               >
-                {isGenerating ? (
-                  <>
-                    <Brain className="mr-2 h-4 w-4 animate-spin text-foreground" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="mr-2 h-4 w-4 text-foreground" />
-                    Generate Content
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+                <SelectTrigger id="difficulty">
+                  <SelectValue placeholder="Select difficulty level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Foundational</SelectItem>
+                  <SelectItem value="2">Intermediate</SelectItem>
+                  <SelectItem value="3">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Difficulty Descriptions */}
+            <div className="space-y-4 text-sm">
+              <p className="font-semibold text-foreground">Difficulty levels</p>
+              <p>
+                <span className="font-semibold text-foreground">Foundational:</span> No prior knowledge needed. Teaches core concepts, terms, and workflows with relatable examples and visuals. Ideal for first-timers or early learners.
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">Intermediate:</span> Assumes basic familiarity. Builds skills through applied understanding, structured breakdowns, and real-world use cases. Great for those looking to deepen their grasp.
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">Advanced:</span> Designed for experienced learners. Explores systems, edge cases, research insights, and practical implementation challenges in depth.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Generated Content - now below both panels, centered and full width */}
       <div className="flex justify-center">
-        <div className="w-full max-w-4xl">
+        <div className="w-full">
+          {/* Generate Button */}
+          <Button 
+            onClick={generatePersonalizedContent}
+            disabled={isGenerating}
+            className="w-full mb-6"
+          >
+            {isGenerating ? (
+              <>
+                <Brain className="mr-2 h-4 w-4 animate-spin text-foreground" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Wand2 className="mr-2 h-4 w-4 text-foreground" />
+                Generate Course Content
+              </>
+            )}
+          </Button>
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
