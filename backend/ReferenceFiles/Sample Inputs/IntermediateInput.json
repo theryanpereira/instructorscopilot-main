@@ -1,0 +1,27 @@
+{
+    "topic": "Artificial Intelligence Foundations and Applications",
+    "difficulty": {
+      "level": "Intermediate",
+      "description": "Assumes basics. Emphasizes application, structured understanding, real-world cases."
+    },
+    "curriculum": "# 📘 Course: Artificial Intelligence (AI3101)\n**Degree**: B.Tech Robotics and Artificial Intelligence  \n**Semester**: III  \n**Total Weeks**: 8  \n**Difficulty Level**: Intermediate  \n**Learning Style Emphasis**: Visual + Reading/Writing\n\n---\n\n## Week 1: Introduction to AI\n...\n## Final Assessment\n\n- Project: Build a basic AI agent with heuristic planning\n- Deliverables: Codebase + Report + Presentation",
+    "teaching_style": "Encourage conceptual clarity before depth. Promote applied thinking over memorization. Prioritize learning by doing (exercises, use cases). Teaching tone is friendly and structured. Use analogies, metaphors, and plain language. Begin with real-world use cases and include visual aids. Align with Bloom’s taxonomy starting with understanding and building to application.",
+    "student_profiles": [
+      {
+        "name": "Ananya",
+        "learning_style": "Visual",
+        "interests": ["Neural Networks", "Robotics Integration"]
+      },
+      {
+        "name": "Ravi",
+        "learning_style": "Reading/Writing",
+        "interests": ["Logic Programming", "AI Safety"]
+      },
+      {
+        "name": "Leena",
+        "learning_style": "Kinesthetic",
+        "interests": ["AI Hardware", "Autonomous Vehicles"]
+      }
+    ]
+  }
+  

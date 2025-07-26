@@ -1,0 +1,9 @@
+{
+    "topic": "Artificial Intelligence Foundations and Applications",
+    "difficulty": {
+      "level": "Advanced",
+      "description": "For experienced learners. Covers edge cases, research, and system-level thinking."
+    },
+    "curriculum": "# 📘 Course: Artificial Intelligence (AI3101)\n**Degree**: B.Tech Robotics and Artificial Intelligence  \n**Semester**: III  \n**Total Weeks**: 8  \n**Difficulty Level**: Intermediate  \n**Learning Style Emphasis**: Visual + Reading/Writing\n\n---\n\n## Week 1: Introduction to AI\n\n**Topics:**\n- History and Evolution of AI\n- Definition and Types (Narrow, General, Super AI)\n- Applications in Robotics\n\n**Outcomes:**\n- Understand the historical context of AI\n- Distinguish between major types of AI\n- Recognize AI use cases in real-world systems\n\n---\n\n## Week 2: Intelligent Agents and Problem Solving\n...\n\n## Final Assessment\n\n- Project: Build a basic AI agent with heuristic planning\n- Deliverables: Codebase + Report + Presentation"
+  }
+  
