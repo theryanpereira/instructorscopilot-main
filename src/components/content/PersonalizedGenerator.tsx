@@ -16,21 +16,49 @@ interface ContentRequest {
   contentType: 'lesson' | 'explanation' | 'practice' | 'summary';
   difficulty: number | null;
   duration: number;
+  teachingStyle: string | null; 
+  curriculumFileSelected: boolean; 
+  curriculumFileName: string | null; // New prop for curriculum file name
 }
 
 export function PersonalizedGenerator() {
   const { toast } = useToast();
   
   // File validation handlers
-  const handleFileChange = (e, allowedTypes, label) => {
+  const handleFileChange = (e, allowedTypes, id) => { // Changed 'label' to 'id'
+    console.log(`handleFileChange called for id: ${id}`);
     const file = e.target.files?.[0];
-    if (file && !allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) {
+    console.log("Selected file:", file);
+
+    if (id === 'curriculum') { // Check against id
+      const newFileSelected = !!file;
+      const newFileName = file ? file.name : null;
+      setContentRequest(prev => {
+        console.log(`Updating curriculum state: selected=${newFileSelected}, name=${newFileName}`);
+        return {
+          ...prev, 
+          curriculumFileSelected: newFileSelected,
+          curriculumFileName: newFileName,
+        };
+      });
+    }
+    if (file && !allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) { // Changed 'id' to 'type' here
+      console.log("File validation failed for:", file.name);
       toast({
         title: 'Invalid file type',
-        description: `Please upload a valid ${label} file (${allowedTypes.join(', ')})`,
+        description: `Please upload a valid ${id} file (${allowedTypes.join(', ')})`,
         variant: 'destructive',
       });
       e.target.value = '';
+      // Clear file name if invalid
+      if (id === 'curriculum') { // Check against id
+        setContentRequest(prev => {
+          console.log("Clearing curriculum state due to invalid file.");
+          return { ...prev, curriculumFileSelected: false, curriculumFileName: null };
+        });
+      }
+    } else if (file) {
+      console.log("File validation passed for:", file.name);
     }
   };
 
@@ -39,16 +67,26 @@ export function PersonalizedGenerator() {
     contentType: 'lesson',
     difficulty: null,
     duration: 30,
+    teachingStyle: null,
+    curriculumFileSelected: false, // Initialize to false
+    curriculumFileName: null, // Initialize file name
   });
 
   const [generatedContent, setGeneratedContent] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Derived state to check if all mandatory fields are filled
+  const canGenerate = 
+    contentRequest.topic.trim() !== '' &&
+    contentRequest.difficulty !== null &&
+    contentRequest.teachingStyle !== null &&
+    contentRequest.curriculumFileSelected;
+
   const generatePersonalizedContent = async () => {
-    if (!contentRequest.topic.trim()) {
+    if (!canGenerate) {
       toast({
-        title: "Error",
-        description: "Please enter a topic for content generation",
+        title: "Missing Information",
+        description: "Please enter all mandatory details to generate course content.",
         variant: "destructive"
       });
       return;
@@ -110,45 +148,74 @@ Continue building on this foundation by exploring advanced topics.`;
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FilePlus className="h-5 w-5 text-foreground" />
-              Required Input
+              <Target className="h-5 w-5 text-foreground" />
+              Course Structure & Teaching style
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             <UploadBoxSmall
               id="curriculum"
               label="Upload curriculum (mandatory)"
-              fileTypesText="Upload .pdf or .md file"
-              allowedTypes={['.pdf', '.md']}
+              fileTypesText="Upload .pdf or .docx file"
+              allowedTypes={['.pdf', '.docx']}
               onFileChange={handleFileChange}
+              fileName={contentRequest.curriculumFileName} // Pass the file name
             />
 
-            <UploadBoxSmall
-              id="student-profile"
-              label="Upload student profile (optional)"
-              fileTypesText="Upload .csv file"
-              allowedTypes={['.csv']}
-              onFileChange={handleFileChange}
-              optional
-            />
-
-            <UploadBoxSmall
-              id="teaching-style"
-              label="Upload teaching style (optional)"
-              fileTypesText="Upload .json or .md file"
-              allowedTypes={['.json', '.md']}
-              onFileChange={handleFileChange}
-              optional
-            />
-            
-            {/* Describe Teaching Style */}
+            {/* Teaching Style Select */}
             <div className="space-y-2">
-              <Label htmlFor="teaching-style-description">Describe your teaching style (optional)</Label>
-              <Textarea 
-                id="teaching-style-description"
-                placeholder="E.g., I like to use real-world examples, keep things conversational, and break complex ideas into simple, step-by-step explanations."
-                rows={4}
-              />
+              <Label htmlFor="teaching-style">Teaching style <span className="text-red-500">*</span></Label>
+              <Select
+                value={contentRequest.teachingStyle || ''}
+                onValueChange={value => setContentRequest(prev => ({ ...prev, teachingStyle: value }))}
+              >
+                <SelectTrigger id="teaching-style">
+                  <SelectValue placeholder="Select a teaching style" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clear-structured">
+                    <div>
+                      <p className="font-medium">Clear & Structured</p>
+                      <p className="text-sm">Explain topics step-by-step in a structured, logical flow. Ideal for teaching concepts clearly and efficiently</p>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="exploratory-guided">
+                    <div>
+                      <p className="font-medium">Exploratory & Guided</p>
+                      <p className="text-sm">Encourage curiosity, pose questions, and guide learners to discover insights through problems or case studies</p>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="project-based">
+                    <div>
+                      <p className="font-medium">Project-Based / Hands-On</p>
+                      <p className="text-sm">Focus on real-world tasks, projects, or examples. Ideal for teaching by doing and skill development.</p>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="conceptual-conversational">
+                    <div>
+                      <p className="font-medium">Conceptual & Conversational</p>
+                      <p className="text-sm">Break down complex ideas using analogies and clear, friendly language. Great for simplifying tough concepts</p>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Teaching Style Descriptions */}
+            <div className="space-y-4 text-sm">
+              <p className="font-semibold text-foreground">Teaching style descriptions:</p>
+              <p>
+                <span className="font-semibold text-foreground">Clear & Structured:</span> Explain topics step-by-step in a structured, logical flow. Ideal for teaching concepts clearly and efficiently
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">Exploratory & Guided:</span> Encourage curiosity, pose questions, and guide learners to discover insights through problems or case studies
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">Project-Based / Hands-On:</span> Focus on real-world tasks, projects, or examples. Ideal for teaching by doing and skill development.
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">Conceptual & Conversational:</span> Break down complex ideas using analogies and clear, friendly language. Great for simplifying tough concepts
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -158,13 +225,13 @@ Continue building on this foundation by exploring advanced topics.`;
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-foreground" />
-              Content Requirements
+              Course Details & Scope
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             {/* Topic for Content (Optional) */}
             <div className="space-y-2">
-              <Label htmlFor="topic-for-content">Topic for course content</Label>
+              <Label htmlFor="topic-for-content">Course topic or title <span className="text-red-500">*</span></Label>
               <Textarea 
                 id="topic-for-content"
                 placeholder="E.g., Introduction to Quantum Physics, Basics of Machine Learning, History of Ancient Rome"
@@ -176,7 +243,7 @@ Continue building on this foundation by exploring advanced topics.`;
 
             {/* Content Difficulty */}
             <div className="space-y-2">
-              <Label htmlFor="difficulty">Content difficulty</Label>
+              <Label htmlFor="difficulty">Content difficulty <span className="text-red-500">*</span></Label>
               <Select
                 value={contentRequest.difficulty !== null ? contentRequest.difficulty.toString() : ''}
                 onValueChange={value => {
@@ -211,17 +278,45 @@ Continue building on this foundation by exploring advanced topics.`;
                 <span className="font-semibold text-foreground">Advanced:</span> Designed for experienced learners. Explores systems, edge cases, research insights, and practical implementation challenges in depth.
               </p>
             </div>
+
+            
           </CardContent>
         </Card>
       </div>
 
+      {/* Optional Inputs Card - Spans full width */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-foreground" /> {/* Using Sparkles as a placeholder icon */} 
+            Optional Inputs
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <UploadBoxSmall
+            id="student-profile-moved"
+            label="Upload student profiles"
+            fileTypesText="Upload excel file or .csv file"
+            allowedTypes={['.xlsx', '.csv']}
+            onFileChange={handleFileChange}
+            optional
+          />
+        </CardContent>
+      </Card>
+
       {/* Generated Content - now below both panels, centered and full width */}
       <div className="flex justify-center">
         <div className="w-full">
+          {/* Conditional Notification Text */}
+          {!canGenerate && (
+            <p className="text-red-500 text-sm mb-2">
+              Please enter mandatory details
+            </p>
+          )}
           {/* Generate Button */}
           <Button 
             onClick={generatePersonalizedContent}
-            disabled={isGenerating}
+            disabled={!canGenerate || isGenerating}
             className="w-full mb-6"
           >
             {isGenerating ? (

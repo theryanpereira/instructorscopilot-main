@@ -8,11 +8,12 @@ interface UploadBoxSmallProps {
   label: string;
   fileTypesText: string;
   allowedTypes: string[];
-  onFileChange: (event: React.ChangeEvent<HTMLInputElement>, allowedTypes: string[], label: string) => void;
+  onFileChange: (event: React.ChangeEvent<HTMLInputElement>, allowedTypes: string[], id: string) => void; // Change label to id
   optional?: boolean;
+  fileName?: string | null;
 }
 
-export function UploadBoxSmall({ id, label, fileTypesText, allowedTypes, onFileChange, optional = false }: UploadBoxSmallProps) {
+export function UploadBoxSmall({ id, label, fileTypesText, allowedTypes, onFileChange, optional = false, fileName = null }: UploadBoxSmallProps) {
   return (
     <div className="space-y-2">
       <Label htmlFor={`${id}-file`}>
@@ -24,15 +25,15 @@ export function UploadBoxSmall({ id, label, fileTypesText, allowedTypes, onFileC
         <Button variant="outline" size="sm" onClick={() => document.getElementById(`${id}-file`)?.click()} className="flex-shrink-0">
           Choose File
         </Button>
-        <p className="text-sm text-muted-foreground truncate">
-          {fileTypesText}
+        <p className={`text-sm truncate ${fileName ? '' : 'text-muted-foreground'}`}>
+          {fileName || fileTypesText}
         </p>
         <Input 
           id={`${id}-file`} 
           type="file" 
           accept={allowedTypes.join(',')} 
           className="hidden" 
-          onChange={e => onFileChange(e, allowedTypes, label)} 
+          onChange={e => onFileChange(e, allowedTypes, id)} // Pass id here
         />
       </div>
     </div>
