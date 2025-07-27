@@ -25,7 +25,7 @@ const Create = () => {
       
       <Tabs defaultValue="generator" className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="generator">Content Generator</TabsTrigger>
+          <TabsTrigger value="generator">Course Generation</TabsTrigger>
           <TabsTrigger value="quiz">Quiz Builder</TabsTrigger>
           <TabsTrigger value="diff">Version Compare</TabsTrigger>
           <TabsTrigger value="share">Share & Preview</TabsTrigger>
