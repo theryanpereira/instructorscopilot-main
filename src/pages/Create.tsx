@@ -11,16 +11,9 @@ import { ReviewerAccess } from "@/components/collaboration/ReviewerAccess";
 const Create = () => {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Course Creator</h1>
-          <p className="text-muted-foreground mt-1">
-            Use AI to generate personalized course content with your unique teaching style
-          </p>
-        </div>
-        <Badge variant="secondary" className="bg-primary/10 text-primary">
-          Phase 2
-        </Badge>
+      <div className="flex items-center space-x-2">
+        <h1 className="text-3xl font-bold">Course Creator</h1>
+        {/* <Badge variant="secondary" className="ml-2">Phase 2</Badge> */}
       </div>
       
       <Tabs defaultValue="generator" className="space-y-6">

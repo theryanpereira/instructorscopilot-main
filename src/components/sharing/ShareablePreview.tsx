@@ -97,9 +97,6 @@ export function ShareablePreview() {
             Create shareable links for your course modules and get feedback
           </p>
         </div>
-        <Badge variant="secondary" className="bg-primary/10 text-primary">
-          Phase 2
-        </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
