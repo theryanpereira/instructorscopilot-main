@@ -173,30 +173,10 @@ Continue building on this foundation by exploring advanced topics.`;
                   <SelectValue placeholder="Select a teaching style" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="clear-structured">
-                    <div>
-                      <p className="font-medium">Clear & Structured</p>
-                      <p className="text-sm">Explain topics step-by-step in a structured, logical flow. Ideal for teaching concepts clearly and efficiently</p>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="exploratory-guided">
-                    <div>
-                      <p className="font-medium">Exploratory & Guided</p>
-                      <p className="text-sm">Encourage curiosity, pose questions, and guide learners to discover insights through problems or case studies</p>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="project-based">
-                    <div>
-                      <p className="font-medium">Project-Based / Hands-On</p>
-                      <p className="text-sm">Focus on real-world tasks, projects, or examples. Ideal for teaching by doing and skill development.</p>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="conceptual-conversational">
-                    <div>
-                      <p className="font-medium">Conceptual & Conversational</p>
-                      <p className="text-sm">Break down complex ideas using analogies and clear, friendly language. Great for simplifying tough concepts</p>
-                    </div>
-                  </SelectItem>
+                  <SelectItem value="clear-structured" className="font-bold">Clear & Structured</SelectItem>
+                  <SelectItem value="exploratory-guided" className="font-bold">Exploratory & Guided</SelectItem>
+                  <SelectItem value="project-based" className="font-bold">Project-Based / Hands-On</SelectItem>
+                  <SelectItem value="conceptual-conversational" className="font-bold">Conceptual & Conversational</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -258,9 +238,9 @@ Continue building on this foundation by exploring advanced topics.`;
                   <SelectValue placeholder="Select difficulty level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Foundational</SelectItem>
-                  <SelectItem value="2">Intermediate</SelectItem>
-                  <SelectItem value="3">Advanced</SelectItem>
+                  <SelectItem value="1" className="font-bold">Foundational</SelectItem>
+                  <SelectItem value="2" className="font-bold">Intermediate</SelectItem>
+                  <SelectItem value="3" className="font-bold">Advanced</SelectItem>
                 </SelectContent>
               </Select>
             </div>
