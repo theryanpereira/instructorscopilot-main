@@ -173,7 +173,6 @@ Continue building on this foundation by exploring advanced topics.`;
                   <SelectValue placeholder="Select a teaching style" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="clear-structured" className="font-bold">Clear & Structured</SelectItem>
                   <SelectItem value="exploratory-guided" className="font-bold">Exploratory & Guided</SelectItem>
                   <SelectItem value="project-based" className="font-bold">Project-Based / Hands-On</SelectItem>
                   <SelectItem value="conceptual-conversational" className="font-bold">Conceptual & Conversational</SelectItem>
@@ -184,9 +183,6 @@ Continue building on this foundation by exploring advanced topics.`;
             {/* Teaching Style Descriptions */}
             <div className="space-y-4 text-sm">
               <p className="font-semibold text-foreground">Teaching style descriptions:</p>
-              <p>
-                <span className="font-semibold text-foreground">Clear & Structured:</span> Explain topics step-by-step in a structured, logical flow. Ideal for teaching concepts clearly and efficiently
-              </p>
               <p>
                 <span className="font-semibold text-foreground">Exploratory & Guided:</span> Encourage curiosity, pose questions, and guide learners to discover insights through problems or case studies
               </p>
