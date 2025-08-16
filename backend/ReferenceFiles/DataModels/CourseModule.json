@@ -1,0 +1,15 @@
+{
+    "topic": "LangChain",
+    "level": "Intermediate",
+    "weeks": [
+      {
+        "week": 1,
+        "title": "LangChain Basics",
+        "overview": "...",
+        "lessons": [
+          { "title": "Intro to LangChain", "content": "...", "quiz": [...] }
+        ]
+      }
+    ]
+  }
+  
