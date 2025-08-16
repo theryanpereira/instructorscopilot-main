@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wand2, Upload, BookOpen, Target, Brain, Sparkles, FilePlus } from "lucide-react";
+import { Wand2, Upload, BookOpen, Target, Brain, Sparkles, FilePlus, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -211,7 +211,7 @@ Continue building on this foundation by exploring advanced topics.`;
               <Textarea 
                 id="topic-for-content"
                 placeholder="E.g., Introduction to Quantum Physics, Basics of Machine Learning, History of Ancient Rome"
-                rows={2}
+                rows={1}
                 value={contentRequest.topic}
                 onChange={(e) => setContentRequest(prev => ({ ...prev, topic: e.target.value }))}
               />
@@ -260,11 +260,50 @@ Continue building on this foundation by exploring advanced topics.`;
         </Card>
       </div>
 
+      {/* Duplicate Optional Inputs Card - Spans full width */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-foreground" />
+            Course Duration Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="course-duration">Please enter the duration for the course in number of weeks</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="course-duration"
+                type="number"
+                placeholder="8"
+                value={contentRequest.duration}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 1 && value <= 8) {
+                    setContentRequest(prev => ({ ...prev, duration: value }));
+                  } else if (e.target.value === '') {
+                    setContentRequest(prev => ({ ...prev, duration: 0 })); // Allow clearing the input
+                  } else {
+                    toast({
+                      title: "Invalid Duration",
+                      description: "Please enter a duration between 1 and 8 weeks.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                className="w-16"
+              />
+              <span className="text-foreground text-sm">weeks</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Optional Inputs Card - Spans full width */}
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-foreground" /> {/* Using Sparkles as a placeholder icon */} 
+            <Sparkles className="h-5 w-5 text-foreground" /> {/* Using Sparkles as a placeholder icon */}
             Optional Inputs
           </CardTitle>
         </CardHeader>
