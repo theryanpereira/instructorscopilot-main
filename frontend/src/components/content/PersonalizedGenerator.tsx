@@ -300,10 +300,11 @@ Continue building on this foundation by exploring advanced topics.`;
       </Card>
 
       {/* Optional Inputs Card - Spans full width */}
+      {/*
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-foreground" /> {/* Using Sparkles as a placeholder icon */}
+            <Sparkles className="h-5 w-5 text-foreground" />
             Optional Inputs
           </CardTitle>
         </CardHeader>
@@ -318,6 +319,7 @@ Continue building on this foundation by exploring advanced topics.`;
           />
         </CardContent>
       </Card>
+      */}
 
       {/* Generated Content - now below both panels, centered and full width */}
       <div className="flex justify-center">
