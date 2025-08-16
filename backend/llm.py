@@ -5,8 +5,10 @@ import pathlib
 import json
 from google.genai import types
 
+# Load environment variables from .env file
 load_dotenv()
 
+# This function loads user configuration from a JSON file if it exists.
 def load_user_inputs():
     """Load user inputs from file if exists"""
     config_file = "user_config.json"
@@ -18,6 +20,7 @@ def load_user_inputs():
             return None
     return None
 
+# This function saves user-provided inputs to a JSON file for future use.
 def save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_style):
     """Save user inputs to file"""
     config_file = "user_config.json"
@@ -34,7 +37,8 @@ def save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_st
     except:
         pass
 
-# Try to load existing user inputs
+# This block handles user input: it attempts to load existing configurations, 
+# and if none are found or an error occurs, it prompts the user for new inputs.
 saved_inputs = load_user_inputs()
 
 if saved_inputs:
@@ -68,34 +72,42 @@ else:
         else:
             break
 
-    difficulty_level = input("Enter the difficulty level (beginner, intermediate, advanced): ")
-    if difficulty_level.lower() in ['none',''] or difficulty_level.lower() not in ['beginner', 'intermediate', 'advanced']:
-        difficulty_level = "beginner"  # Default to beginner if none specified
-
     while True:
-        duration = input("Enter the desired duration for the course (e.g., 4 weeks, 8 weeks): ")
-        if duration == "" or duration.lower() == "none":
-            print("Duration cannot be empty. Please enter a valid duration.")
+        difficulty_level = input("Enter the difficulty level (Foundational, Intermediate, Advanced): ")
+        if difficulty_level.lower() in ['none',''] or difficulty_level.lower() not in ['foundational', 'intermediate', 'advanced']:
+            print("Difficulty level cannot be empty. Please enter a valid difficulty level.")
         else:
             break
-
-    teaching_style = input("Enter preferred teaching style (e.g., hands-on, theoretical, project-based): ")
-    if teaching_style.lower() == "none":
-        teaching_style = "theoretical"  # Default to theoretical if none specified
     
-    # Save inputs for future runs
-    save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_style)
-    print("Configuration saved for future runs.")
+# Loop to ensure a valid teaching style is entered.
+while True:
+    teaching_style = input("Enter preferred teaching style (e.g - Exploratory & Guided, Project-Based / Hands-On, Conceptual & Conversational): ")
+    if teaching_style.lower() == "none":
+        print("Teaching style cannot be empty. Please enter a valid teaching style.")
+    else:
+        break
+
+
+# Loop to ensure a valid duration is entered.
+while True:
+    duration = input("Enter the desired duration for the course in number of weeks(e.g., 4 , 8): ")
+    if duration == "" or duration.lower() == "none":
+        print("Duration cannot be empty. Please enter a valid duration.")
+    else:
+        break
+
 
 print("Thank you for providing the inputs. Processing your request...")
 
+# Initialize the Google Gemini API client with the API key from environment variables.
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Configure Google Search as a tool for grounding
+# Configure Google Search as a tool for grounding the LLM's responses.
 google_search_tool = genai.types.Tool(
     google_search=genai.types.GoogleSearch()
 )
 
+# Define the system prompt that guides the LLM's behavior and responsibilities as a course design assistant.
 system_prompt = """You are a course design assistant.
 
 You will be provided with the following **mandatory inputs**:
@@ -191,6 +203,7 @@ Create a **cohesive, learner-aligned course plan** that:
 
 Respond only after carefully analyzing all inputs and formatting the final course plan in structured Markdown."""
 
+# This function searches for a file named 'curriculum.pdf' in the current directory and its parent directories.
 def find_curriculum_file():
     """Find curriculum.pdf in current directory or parent directories"""
     current_dir = pathlib.Path.cwd()
@@ -214,54 +227,47 @@ def find_curriculum_file():
     
     return None
 
+# This is the main execution block that orchestrates the LLM interaction.
 try:
-    # Find curriculum.pdf file
-    curriculum_path = find_curriculum_file()
+    # Specify the fixed path to the curriculum PDF file.
+    filepath = pathlib.Path("Inputs and Outputs/curriculum.pdf")
+    response = client.models.generate_content(
+        model='gemini-2.0-flash',
+        contents=[teaching_style, duration, difficulty_level,
+                    types.Part.from_bytes(
+                        data=filepath.read_bytes(),
+                        mime_type='application/pdf',
+                    )],
+        config=genai.types.GenerateContentConfig(
+            tools=[google_search_tool],
+            system_instruction=system_prompt,
+        ),
+    )
+
+    print(response.text)
     
-    if curriculum_path is None:
-        print("Error: curriculum.pdf not found in current directory or parent directories.")
-        print("Please ensure curriculum.pdf exists in one of these locations:")
-        print(f"- {pathlib.Path.cwd()}")
-        print(f"- {pathlib.Path.cwd().parent}")
-        print(f"- {pathlib.Path.cwd().parent.parent}")
-    else:
-        print(f"Found curriculum.pdf at: {curriculum_path}")
-        
-        response = client.models.generate_content(
-            model='gemini-2.0-flash',
-            contents=[teaching_style, duration, difficulty_level,
-                        types.Part.from_bytes(
-                            data=curriculum_path.read_bytes(),
-                            mime_type='application/pdf',
-                        )],
-            config=genai.types.GenerateContentConfig(
-                tools=[google_search_tool],
-                system_instruction=system_prompt,
-            ),
-        )
+    # Save the generated response to a text file for the master agent.
+    output_file_path = "Inputs and Outputs/planner_agent_instruction.txt"
+    try:
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+        print(f"\nResponse saved to: {output_file_path}")
+    except Exception as e:
+        print(f"Error saving response to file: {e}")
 
-        print(response.text)
-        
-        # Save the response to a text file in the same directory as curriculum.pdf
-        output_file_path = curriculum_path.parent / "planner_agent_instruction.txt"
-        try:
-            with open(output_file_path, 'w', encoding='utf-8') as f:
-                f.write(response.text)
-            print(f"\nResponse saved to: {output_file_path}")
-        except Exception as e:
-            print(f"Error saving response to file: {e}")
-
-        # Optional: Print grounding metadata if available
-        if response.candidates:
-            for candidate in response.candidates:
-                if candidate.grounding_metadata and candidate.grounding_metadata.web_search_queries:
-                    print("\n--- Grounding Metadata ---")
-                    print("Web Search Queries:", candidate.grounding_metadata.web_search_queries)
-                    if candidate.grounding_metadata.grounding_chunks:
-                        print("Grounding Chunks (Web):")
-                        for chunk in candidate.grounding_metadata.grounding_chunks:
-                            if chunk.web:
-                                print(f"  - Title: {chunk.web.title}, URL: {chunk.web.uri}")
-
+    # Optional: Print grounding metadata (web search queries and chunks) if available in the response.
+    if response.candidates:
+        for candidate in response.candidates:
+            if candidate.grounding_metadata and candidate.grounding_metadata.web_search_queries:
+                print("\n--- Grounding Metadata ---")
+                print("Web Search Queries:", candidate.grounding_metadata.web_search_queries)
+                if candidate.grounding_metadata.grounding_chunks:
+                    print("Grounding Chunks (Web):")
+                    for chunk in candidate.grounding_metadata.grounding_chunks:
+                        if chunk.web:
+                            print(f"  - Title: {chunk.web.title}, URL: {chunk.web.uri}")
 except Exception as e:
     print(f"An error occurred during LLM interaction: {e}")
+# This 'else' block executes if no exception occurred during the 'try' block, but in this context, it indicates an issue with loading input data for the LLM.
+else:
+    print("Could not load input data for the LLM.")
