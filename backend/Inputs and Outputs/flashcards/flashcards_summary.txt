@@ -1,0 +1,151 @@
+📚 FLASHCARDS SUMMARY
+============================================================
+
+
+🗓️ WEEK 1
+----------------------------------------
+
+📋 Card #1: Environment Setup
+❓ Q: Why is it important to 'Add Python to PATH' during installation?
+✅ A: It allows you to run Python commands directly from any command prompt or terminal, making it accessible system-wide without specifying the full path.
+🎯 Difficulty: Easy
+🏷️ Tags: installation, environment, setup
+
+
+📋 Card #2: Package Management
+❓ Q: What is the primary purpose of `pip` in Python?
+✅ A: Pip is the package installer for Python, used to easily install and manage third-party libraries and packages for your projects.
+🎯 Difficulty: Easy
+🏷️ Tags: pip, packages, environment
+
+
+📋 Card #3: Virtual Environments
+❓ Q: Explain the benefit of using a virtual environment (`venv`) for a Python project.
+✅ A: A virtual environment creates an isolated space for project dependencies, preventing conflicts between different projects and the system-wide Python installation, ensuring reproducibility.
+🎯 Difficulty: Medium
+🏷️ Tags: virtual environment, venv, isolation
+
+
+📋 Card #4: Development Tools
+❓ Q: What is the main difference between a code editor (like VS Code) and an IDE (like PyCharm)?
+✅ A: A code editor is lightweight for writing code, while an IDE (Integrated Development Environment) offers more features like integrated debugging, project management, and advanced refactoring tools.
+🎯 Difficulty: Medium
+🏷️ Tags: tools, IDE, editor, comparison
+
+
+🗓️ WEEK 2
+----------------------------------------
+
+📋 Card #5: Data Types
+❓ Q: What are the two core characteristics of a Python `list`?
+✅ A: A list is an ordered collection of items, meaning elements maintain their position, and it is mutable (changeable), allowing modification after creation.
+🎯 Difficulty: Easy
+🏷️ Tags: data types, list, mutable
+
+
+📋 Card #6: Data Types
+❓ Q: How does a `tuple` differ from a `list` in Python?
+✅ A: A tuple is ordered but immutable (unchangeable), meaning its elements cannot be modified after creation, whereas a list is mutable and can be changed.
+🎯 Difficulty: Medium
+🏷️ Tags: data types, tuple, list, comparison
+
+
+📋 Card #7: Data Types
+❓ Q: When would you typically use a Python `dictionary`?
+✅ A: You would use a dictionary to store data as unordered collections of unique key-value pairs, which is ideal for representing structured data like records or configurations.
+🎯 Difficulty: Medium
+🏷️ Tags: data types, dictionary, key-value
+
+
+📋 Card #8: Operators
+❓ Q: What does the `//` operator do in Python? Provide an example.
+✅ A: The `//` (floor division) operator divides two numbers and returns the integer part of the quotient, discarding any fractional part. Example: `7 // 2` results in `3`.
+🎯 Difficulty: Medium
+🏷️ Tags: operators, arithmetic, division
+
+
+📋 Card #9: Operators
+❓ Q: What is the purpose of the `is` identity operator in Python?
+✅ A: The `is` operator checks if two operands refer to the exact same object in memory, not just if their values are equal. This distinguishes it from `==` which checks for value equality.
+🎯 Difficulty: Hard
+🏷️ Tags: operators, identity, memory
+
+
+🗓️ WEEK 3
+----------------------------------------
+
+📋 Card #10: Control Flow
+❓ Q: What is the fundamental difference between an `if` statement and a `for` loop?
+✅ A: An `if` statement executes code based on a condition being true (decision-making), while a `for` loop iterates over a sequence, repeating code for each item (repetition).
+🎯 Difficulty: Easy
+🏷️ Tags: control flow, conditionals, loops
+
+
+📋 Card #11: Control Flow
+❓ Q: When would you use an `elif` statement in Python?
+✅ A: You use `elif` to check an additional condition if the preceding `if` (or previous `elif`) condition(s) evaluate to false, allowing for multiple mutually exclusive outcomes.
+🎯 Difficulty: Medium
+🏷️ Tags: control flow, elif, conditionals
+
+
+📋 Card #12: Control Flow
+❓ Q: Describe a scenario where a `while` loop would be more appropriate than a `for` loop.
+✅ A: A `while` loop is better when the number of iterations is unknown and depends on a condition becoming false, e.g., continuously processing user input until a specific keyword is entered.
+🎯 Difficulty: Medium
+🏷️ Tags: loops, while, for, comparison
+
+
+📋 Card #13: Loop Control
+❓ Q: What is the effect of the `break` statement inside a loop?
+✅ A: The `break` statement immediately terminates the innermost loop, causing the program's execution to continue at the statement directly following the loop.
+🎯 Difficulty: Easy
+🏷️ Tags: loops, break, control flow
+
+
+📋 Card #14: Loop Control
+❓ Q: What does the `continue` statement do in a loop?
+✅ A: The `continue` statement skips the rest of the current iteration of the loop and immediately proceeds to the next iteration (checking the loop condition again).
+🎯 Difficulty: Easy
+🏷️ Tags: loops, continue, control flow
+
+
+🗓️ WEEK 4
+----------------------------------------
+
+📋 Card #15: Functions
+❓ Q: What is the main benefit of defining a function in Python?
+✅ A: Functions allow you to organize code into reusable blocks, improving readability, making code easier to maintain, and preventing repetitive code (DRY principle).
+🎯 Difficulty: Easy
+🏷️ Tags: functions, reusability, modularity
+
+
+📋 Card #16: Functions
+❓ Q: Differentiate between a parameter and an argument when working with functions.
+✅ A: A parameter is a variable defined in the function's signature (definition), acting as a placeholder. An argument is the actual value passed to that parameter when the function is called.
+🎯 Difficulty: Medium
+🏷️ Tags: functions, parameters, arguments
+
+
+📋 Card #17: Modules
+❓ Q: What is a Python module, and why are they useful?
+✅ A: A Python module is a file containing Python code (functions, classes, variables) that can be imported and reused in other Python programs, promoting code organization and reusability.
+🎯 Difficulty: Easy
+🏷️ Tags: modules, reusability, organization
+
+
+📋 Card #18: Functions
+❓ Q: Explain the concept of 'local scope' in Python functions.
+✅ A: Local scope means variables defined inside a function are only accessible within that specific function. They are created when the function is called and destroyed when it finishes execution.
+🎯 Difficulty: Medium
+🏷️ Tags: scope, functions, variables
+
+
+📊 STATISTICS
+==============================
+Total Cards: 18
+Weeks Covered: 4
+
+Difficulty Distribution:
+  Easy: 8
+  Medium: 9
+  Hard: 1
