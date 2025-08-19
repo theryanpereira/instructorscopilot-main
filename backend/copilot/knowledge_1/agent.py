@@ -1,198 +1,145 @@
-from google.adk.agents import LlmAgent, LoopAgent
+from google.adk.agents import LlmAgent, SequentialAgent, LoopAgent
 from google.adk.tools import google_search
-from pathlib import Path 
+from pathlib import Path
 import os
-import sqlite3, json
-from google.adk.tools.tool_context import ToolContext
 
-# === DB READER TOOL FUNCTIONS ===
-
-def _find_sqlite_file() -> str:
-    """
-    Resolve SQLite path from DATABASE_URL if set, otherwise look for 'my_agent_data.db'
-    in CWD or its parents. Returns an absolute path.
-    """
-    url = os.getenv("DATABASE_URL")
-    if url and url.startswith("sqlite:///"):
-        # strip the prefix, keep absolute/relative path component
-        path = url.replace("sqlite:///", "", 1)
-        return str(Path(path).resolve())
-
-    # Fallbacks: search typical locations
-    candidates = [
-        Path.cwd() / "my_agent_data.db",
-        Path(__file__).resolve().parent / "my_agent_data.db",
-        Path(__file__).resolve().parent.parent / "my_agent_data.db",
-    ]
-    for p in candidates:
-        if p.exists():
-            return str(p.resolve())
-    # Last resort: default
-    return str((Path.cwd() / "my_agent_data.db").resolve())
-
-
-def db_read_session_dump(
-    include_state: bool = True,
-    include_events: bool = True,
-    max_chars: int = 400_000,
-    tool_context: ToolContext = None,
-) -> dict:
-    """
-    Dump complete textual context for the *current session*:
-        • sessions.state (JSON)
-        • events (author + plain text extracted from content JSON parts)
-    Truncates to max_chars to keep prompts under model limits.
-    """
-    db_file = _find_sqlite_file()
-    conn = sqlite3.connect(db_file)
+# File writing function (will be automatically wrapped as FunctionTool by ADK)
+def write_to_file(file_path: str, content: str, mode: str = "a") -> dict:
     try:
-        sid = getattr(tool_context, "session_id", None)
-        app = getattr(tool_context, "app_name", None)
-
-        parts = []
-
-        if include_state:
-            cur = conn.cursor()
-            if sid and app:
-                cur.execute(
-                    "SELECT state FROM sessions WHERE id=? AND app_name=? LIMIT 1",
-                    (sid, app),
-                )
-            elif sid:
-                cur.execute("SELECT state FROM sessions WHERE id=? LIMIT 1", (sid,))
-            else:
-                cur.execute("SELECT state FROM sessions ORDER BY rowid DESC LIMIT 1")
-            row = cur.fetchone()
-            state_text = row[0] if row and row[0] else "{}"
-            parts.append("=== SESSION STATE (JSON) ===\n" + state_text)
-
-        if include_events:
-            cur = conn.cursor()
-            if sid:
-                cur.execute(
-                    "SELECT author, content FROM events WHERE session_id=? ORDER BY timestamp ASC",
-                    (sid,),
-                )
-            else:
-                cur.execute("SELECT author, content FROM events ORDER BY timestamp ASC")
-            ev_lines = []
-            for author, content_json in cur.fetchall():
-                text = ""
-                try:
-                    obj = json.loads(content_json or "{}")
-                    if isinstance(obj, dict):
-                        ptexts = []
-                        for p in obj.get("parts", []):
-                            if isinstance(p, dict) and isinstance(p.get("text"), str):
-                                ptexts.append(p["text"])
-                        text = " ".join(t.strip() for t in ptexts if t).strip()
-                except Exception:
-                    pass
-                ev_lines.append(f"[{author}] {text}")
-            parts.append("=== EVENTS (TEXT) ===\n" + "\n".join(ev_lines))
-
-        combined = "\n\n".join(parts).strip()
-        truncated = combined[:max_chars]
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        with open(file_path, mode, encoding='utf-8') as file:
+            file.write(content)
+        
         return {
-            "dump": truncated,
-            "truncated": len(truncated) < len(combined),
-            "chars": len(truncated),
+            "status": "success",
+            "message": f"Successfully wrote content to {file_path}",
+            "file_path": file_path,
+            "mode": mode
         }
-    finally:
-        conn.close()
+    except Exception as e:
+        return {
+            "status": "error", 
+            "message": f"Error writing to file {file_path}: {str(e)}",
+            "file_path": file_path,
+            "error": str(e)
+        }
 
-deepcontentgeneration = LlmAgent(
-    name="deepcontentgeneration",
-    model="gemini-2.0-flash",
-    tools=[db_read_session_dump],
-    description=(
-        "Reads the entire session database (state + all events) and produces "
-        "extremely detailed, instructor-teachable weekly content that builds on "
-        "the CoursePlannerAgent and ContentGeneratorAgent outputs."
-    ),
-    instruction=f"""
-You are the **Deep Content Generation** agent.
+# Helper function to get the proper file path
+def get_output_file_path():
+    """Get the proper file path for saving the deep course content"""
+    project_root = Path(__file__).resolve().parents[2]
+    file_path = project_root / "Inputs and Outputs" / "deep_agent_output.txt"
+    return str(file_path)
 
-GOAL
-- Produce extremely detailed, instructor-ready weekly course content, grounded in **all prior work**:
+# Read the planner agent instruction file
+def read_planner_output():
+    try:
+        # Resolve project root: this file is at copilot/knowledge/agent.py -> go up 2 levels
+        project_root = Path(__file__).resolve().parents[2]
+        file_path = project_root / "Inputs and Outputs" / "plan_agent_output.txt"
+        with file_path.open('r', encoding='utf-8') as file:
+            return file.read()
+    except FileNotFoundError:
+        return "Planner agent output file not found. Please ensure the file exists at 'Inputs and Outputs/planner_agent_instruction.txt' under the project root."
+    except Exception as e:
+        return f"Error reading planner output file: {str(e)}"
 
-MUST DO FIRST
-1) Call `db_read_session_dump(include_state=true, include_events=true)`.
-2) Read the returned 'dump' **word by word, line by line**. This is the authoritative context for this session.
-3) If the response indicates `truncated=true`, call the tool again with a larger `max_chars` and continue reading until you have everything you need.
+# Get the content from the planner instruction file
+planner_content = read_planner_output()
 
-CONTENT STRATEGY
-- Treat the dump as the canonical history: planner specifications, plan, generated materials, and any previous deep content.
-- Synthesize and **expand** every idea for real classroom use:
-    - Clear explanations (student-friendly)
-    - Worked examples, step-by-step
-    - Instructor notes, misconceptions, scaffolding
-    - Differentiation (remedial/enrichment)
-    - Activities, labs, worksheets, rubrics, answer keys
-    - Short assessments (formative & summative) with answers
-    - Resource list (verified via Google Search when helpful)
+deep_course_content_Creator = LlmAgent(
+    name = "DeepCourseContentCreator",
+    model = "gemini-2.0-flash",
+    tools = [write_to_file],  
+    description = "A deep content creator agent that generates extremely comprehensive and detailed course materials week-by-week and saves them to a file.",
+    instruction= f"""
+You are an Expert Deep Course Content Creator Agent with 20+ years of experience in educational design. 
+You transform basic course content into fully teachable, deeply elaborated week-by-week lessons.
 
-WEEKLY PRODUCTION RULES
-- Create **one fully complete week** per iteration, then stop.
-- Check the database dump for any existing deep content, and if found, continue from the **next** week number and **append** (do NOT overwrite).
-- Follow this structure:
+INPUT:
+You will be provided with the following course design specifications (from `plan_agent_output.txt`):
+{planner_content}
 
+YOUR MANDATE:
+- Teach using a real-world-problem-first approach
+- Each week should be a complete, stand-alone teaching unit
+- Always connect new weeks to the knowledge from previous weeks
+- Focus on rich explanations, not quizzes or flashcards
+- Use BOTH your LLM intelligence and the Google Search tool to gather, verify, and integrate the **most accurate, current, and outstanding course content possible**
+- **IMPORTANT: Save ALL generated content to a file using the write_to_file tool**
+
+FILE SAVING INSTRUCTIONS:
+- At the start of content generation, use write_to_file tool to create/overwrite the output file: 'Inputs and Outputs/deep_course_content_output.txt' with a course header
+- After completing each week's content, use write_to_file tool with mode='a' to append that week's content to the file
+- At the end, use write_to_file tool with mode='a' to append "DONE and DUSTED" to signal completion
+
+WEEK-BY-WEEK PROCESS:
+1. **FIRST**: Call write_to_file(file_path='Inputs and Outputs/deep_course_content_output.txt', content='Course Content Generated by DeepCourseContentCreator Agent\\n\\n', mode='w') to initialize the file
+2. Identify the total number of weeks in the course
+3. Start with Week 1 (or next incomplete week) and complete it fully
+4. **After each week**: Call write_to_file(file_path='Inputs and Outputs/deep_course_content_output.txt', content=[week_content], mode='a') to append the week's content
+5. After each week, output a HALT marker to pause for ~10 seconds before continuing
+
+CONTENT STRUCTURE FOR EACH WEEK:
 === PROCESSING WEEK [NUMBER] ===
 
-# Week [Number]: [Title] — From Real-World Problem to Solution
+# Week [Number]: [Week Title] - From Real-World Problem to Solution
 
-## 🔗 Connection to Prior Learning
-[Concise recap that bridges to this week.]
+## 🔗 Connecting from Previous Weeks (if applicable)
+Briefly recap what was covered before and explain how it links to this week's topic.
 
-## 🔍 Real-World Problem
-[Compelling scenario and why it matters.]
+## 🔍 The Real-World Problem
+- Describe a real scenario, challenge, or case study where the topic is relevant
+- Explain why this problem matters and its real consequences
 
-## 💡 Core Concept(s) as the Solution
-[Deep explanation connecting concept(s) to the problem.]
+## 💡 Introducing the Topic as the Solution
+- Present the main concept for this week
+- Explain how it solves the problem
+- Highlight why this solution is better than alternatives
 
-## 📚 Teach It Deeply (Instructor Script)
-- [Narrative explanation with analogies]
-- [Stepwise breakdowns and mini-checks]
-- [Common misconceptions + fixes]
+## 📚 Deep Explanation
+- Cover **all sub-classifications, definitions, and related concepts**
+- Break down complex ideas into smaller steps
+- Use analogies or relatable examples to improve understanding
+- Show historical context if relevant
+- Ensure explanations are enriched with **verified, up-to-date information from Google Search**
 
-## 🧪 Guided Practice
-- [2–3 worked examples with steps and reasoning]
+## 🌟 Practical Examples
+- Provide 2–4 detailed, realistic examples
+- Each example should explain the setup, steps, and outcomes
 
-## 🧠 Independent Practice (Worksheet)
-- [8–12 problems with answers/solutions]
-
-## 🧩 Project / Lab (if applicable)
-- [Detailed steps, expected outputs, evaluation criteria]
-
-## ✅ Assessment
-- **Formative quiz** (5–8 Qs) with answers
-- **Summative task** with rubric
-
-## 🧭 Differentiation & Support
-- [Remedial tasks, enrichment options, accommodations]
-
-## 📚 References & Current Resources
-- [If you used Google Search: include links + why relevant]
+## 📖 Additional Case Studies (if possible)
+- Provide 1–2 short real-world cases showing the concept in action
 
 ## 🚀 Looking Ahead
-- [How this sets up the next week]
+- Summarize key takeaways
+- Explain how this week's content sets up the next week's learning
 
 === WEEK [NUMBER] COMPLETED ===
-<<HALT_FOR_SECONDS:10>>
 
-OUTPUT RULES
-- Always **append** to existing deep course content found in the database.
-- If conflicting info appears in the dump, prioritize the **most recent** events/state and explain the resolution in one sentence.
+<Halt/Pause for 4 seconds>
+
+WORKFLOW SUMMARY:
+1. Start by calling write_to_file to create 'Inputs and Outputs/deep_course_content_output.txt' with course header (mode='w')
+2. Generate each week's content fully using Google Search for enriched information
+3. After each week, call write_to_file with mode='a' to append that week's content to the file
+4. Continue until all weeks are complete
+5. Finally, call write_to_file with mode='a' to append "\\n\\nDONE and DUSTED\\n" to signal completion
+
+Begin every response with a heading saying "=== [DeepCourseContentCreator] ===
+
+Important: After all weeks are completed, use write_to_file to append "DONE and DUSTED" to the file to signal that the course content has been fully elaborated into week-by-week lessons.
 """,
-    output_key="deep_course_content",
+    output_key="deep_content",
 )
 
-# Loop it so it can generate multiple weeks (one per iteration)
 deep_content_loop = LoopAgent(
-    name="DeepContentLoop",
-    sub_agents=[deepcontentgeneration],
-    description="Generates one complete, instructor-ready week per iteration by reading the entire DB.",
-    max_iterations=3,  # adjust as needed
+    name="deepcontentloop",
+    sub_agents=[deep_course_content_Creator],
+    description="A loop agent that refines and enhances the generated course content based on quality checks and saves output to file.",
+    max_iterations=3,
 )
 
 root_agent = deep_content_loop

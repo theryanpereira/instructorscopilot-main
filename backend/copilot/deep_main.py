@@ -10,13 +10,10 @@ from dotenv import load_dotenv
 # Make project root importable
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from knowledge.agent import courseplanneragent as final_pipeline  # your SequentialAgent (planner -> loop(content))
+from knowledge_1.agent import deep_content_loop as final_pipeline  # LoopAgent over DeepCourseContentCreator
 
 APP_NAME = "AI Copilot for Instructors"
 EXPORT_DIR = "Inputs and Outputs"
-
-def _nowstamp():
-    return datetime.now().strftime("%Y%m%d-%H%M%S")
 
 def _out_dir() -> Path:
     root = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -67,49 +64,77 @@ async def run_knowledge_and_save(prompt: str):
     #    (Sequential/Loop agent semantics in ADK docs)
     runner = Runner(agent=final_pipeline, app_name=APP_NAME, session_service=session_service)
 
-    print("\n=== Running Knowledge Pipeline (Planner → Content) ===")
+    print("\n=== Running Deep Content Loop (DeepCourseContentCreator) ===")
+    # Prepare output file: truncate at start so this run has a clean log
+    output_path = _out_dir() / "deep_agent_output.txt"
+    output_path.write_text("", encoding="utf-8")
     # Stream buckets as a fallback if session.state isn't filled
     stream_bucket = {
-        "CoursePlannerAgent": [],
+        "DeepCourseContentCreator": [],
         "Other": []
     }
+    # Chronological capture of ALL text events (to preserve order)
+    stream_all: list[str] = []
 
+    seen_done = False
     async for event in runner.run_async(user_id=user_id, session_id=session_id, new_message=user_msg):
-        if getattr(event, "type", "") == "agent_reply" or hasattr(event, "is_final_response"):
-            txt = _extract_text(event)
-            # Try to detect source agent
-            agent_name = getattr(event, "agent_name", None)
-            if not agent_name and txt.startswith("=== [CoursePlannerAgent] ==="):
-                agent_name = "CoursePlannerAgent"
-            if agent_name in stream_bucket:
-                stream_bucket[agent_name].append(txt)
-            else:
-                stream_bucket["Other"].append(txt)
+        # Capture ANY event text to avoid missing intermediate chunks
+        txt = _extract_text(event)
+        if not txt:
+            continue
+        # Detect source agent if available, else try to infer, else mark unknown
+        agent_name = getattr(event, "agent_name", None)
+        if not agent_name and txt.startswith("=== [DeepCourseContentCreator] ==="):
+            agent_name = "DeepCourseContentCreator"
+        # Save into buckets
+        if agent_name in stream_bucket:
+            stream_bucket[agent_name].append(txt)
+        else:
+            stream_bucket["Other"].append(txt)
+        # Append to chronological log with labels
+        etype = getattr(event, "type", "")
+        label = agent_name or "UnknownAgent"
+        chunk = f"--- [{label} | {etype}] ---\n{txt}\n"
+        stream_all.append(chunk)
+        # Also append to the file immediately to persist progress
+        with output_path.open("a", encoding="utf-8") as f:
+            f.write(chunk)
+        # Detect completion sentinel
+        if "DONE and DUSTED" in txt:
+            seen_done = True
 
+    # 4) Prefer full chronological stream so every iteration/message is captured (with labels)
+    stream_full = "\n\n".join(stream_all).strip()
+
+    if stream_full:
+        # If we already appended while streaming, ensure file has the final full content as well
+        # Overwrite to keep a single cohesive log
+        output_path.write_text(stream_full + "\n", encoding="utf-8")
+        # If sentinel was found, we consider this a complete run
+        if seen_done:
+            return
+
+    # 5) Fallback to final state output if stream didn't capture
     sess = session_service.get_session(app_name=APP_NAME, user_id=user_id, session_id=session_id)
     if inspect.isawaitable(sess):
         sess = await sess
     state = getattr(sess, "state", {}) or {}
-    plan_txt = state.get("course_plan", "").strip()     # from CoursePlannerAgent
+    deep_txt = state.get("deep_content", "").strip()  # from DeepCourseContentCreator (output_key)
 
-    if not plan_txt:
-        # Fallback to the stream bucket
-        plan_txt = "\n\n".join(stream_bucket["CoursePlannerAgent"]).strip()
-
-    if not plan_txt:
-        # As a last resort, dump anything we caught
-        combined = "\n\n".join(stream_bucket["Other"]).strip()
-        if not combined:
-            raise RuntimeError("No output captured from planner agent. Ensure output_key is set and agent replies.")
-        _write_txt("plan_agent_output", combined)
+    if deep_txt:
+        _write_txt("deep_agent_output", deep_txt)
         return
 
-    if plan_txt:
-        _write_txt("plan_agent_output", plan_txt)
+    # 6) Last resort: dump anything else we caught
+    combined = "\n\n".join(stream_bucket["Other"]).strip()
+    if not combined:
+        raise RuntimeError("No output captured from DeepCourseContentCreator. Ensure output_key is set and agent replies.")
+    _write_txt("deep_agent_output", combined)
+    return
 
 async def main_async():
-    # You can tailor this to your exact expected input contract for the planner
-    prompt = "Generate the course plan."
+    # Provide the deep content creator a concise task prompt
+    prompt = "Take the provided course_content and generate deeply elaborated week-by-week lessons."
     await run_knowledge_and_save(prompt)
 
 if __name__ == "__main__":

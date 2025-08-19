@@ -38,3 +38,16 @@ src/integrations/supabase/types.ts # This file might be auto-generated, consider
 
 # Other
 *.tgz
+
+# Build artifacts
+build/
+
+# Test coverage
+coverage/
+
+# ESLint cache
+.eslintcache
+
+# Temporary files
+*.tmp
+*.bak

@@ -2,13 +2,11 @@ from google import genai
 from dotenv import load_dotenv
 import os
 import pathlib
-import json
 from google.genai import types
+import json
 
-# Load environment variables from .env file
 load_dotenv()
 
-# This function loads user configuration from a JSON file if it exists.
 def load_user_inputs():
     """Load user inputs from file if exists"""
     config_file = "user_config.json"
@@ -20,7 +18,7 @@ def load_user_inputs():
             return None
     return None
 
-# This function saves user-provided inputs to a JSON file for future use.
+
 def save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_style):
     """Save user inputs to file"""
     config_file = "user_config.json"
@@ -37,9 +35,10 @@ def save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_st
     except:
         pass
 
-# This block handles user input: it attempts to load existing configurations, 
-# and if none are found or an error occurs, it prompts the user for new inputs.
+
+# Try to load existing user inputs
 saved_inputs = load_user_inputs()
+
 
 if saved_inputs:
     print("Using saved user configuration:")
@@ -65,6 +64,7 @@ else:
         else:
             break
 
+
     while True:
         user_id = input("Give a user ID (Example: user_id_5678): ")
         if user_id.strip() == "":
@@ -72,49 +72,46 @@ else:
         else:
             break
 
+
+    difficulty_level = input("Enter the difficulty level (Foundational, Intermediate, Advanced): ")
+    if difficulty_level.lower() in ['none',''] or difficulty_level.lower() not in ['foundational', 'intermediate', 'advanced']:
+        difficulty_level = "Foundational"  # Default to Foundational if none specified
+
+
     while True:
-        difficulty_level = input("Enter the difficulty level (Foundational, Intermediate, Advanced): ")
-        if difficulty_level.lower() in ['none',''] or difficulty_level.lower() not in ['foundational', 'intermediate', 'advanced']:
-            print("Difficulty level cannot be empty. Please enter a valid difficulty level.")
+        duration = input("Enter the desired duration for the course (e.g., 4 weeks, 8 weeks): ")
+        if duration == "" or duration.lower() == "none":
+            print("Duration cannot be empty. Please enter a valid duration.")
         else:
             break
-    
-# Loop to ensure a valid teaching style is entered.
-while True:
-    teaching_style = input("Enter preferred teaching style (e.g - Exploratory & Guided, Project-Based / Hands-On, Conceptual & Conversational): ")
+
+
+    teaching_style = input("Enter preferred teaching style (e.g., Exploratory & Guided, Project-Based / Hands-On, Conceptual & Conversational): ")
     if teaching_style.lower() == "none":
-        print("Teaching style cannot be empty. Please enter a valid teaching style.")
-    else:
-        break
-
-
-# Loop to ensure a valid duration is entered.
-while True:
-    duration = input("Enter the desired duration for the course in number of weeks(e.g., 4 , 8): ")
-    if duration == "" or duration.lower() == "none":
-        print("Duration cannot be empty. Please enter a valid duration.")
-    else:
-        break
+        teaching_style = "Exploratory & Guided"  # Default to Exploratory & Guided if none specified
+    
+    # Save inputs for future runs
+    save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_style)
+    print("Configuration saved for future runs.")
 
 
 print("Thank you for providing the inputs. Processing your request...")
 
-# Initialize the Google Gemini API client with the API key from environment variables.
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Configure Google Search as a tool for grounding the LLM's responses.
+# Configure Google Search as a tool for grounding
 google_search_tool = genai.types.Tool(
     google_search=genai.types.GoogleSearch()
 )
 
-# Define the system prompt that guides the LLM's behavior and responsibilities as a course design assistant.
 system_prompt = """You are a course design assistant.
 
 You will be provided with the following **mandatory inputs**:
 1. A **curriculum document** in PDF format containing existing course content (e.g., syllabi, outlines, topics, activities, or readings)
 2. A **course topic or name** describing what the learner or instructor wants the course to focus on
-3. A selected **teaching style** (see below)
-4. A selected **difficulty level** (see below)
+3. A selected **difficulty level** (see below)
+4. A selected **teaching style** (see below) 
+5. A selected **duration** (see below)
 
 ---
 
@@ -203,50 +200,59 @@ Create a **cohesive, learner-aligned course plan** that:
 
 Respond only after carefully analyzing all inputs and formatting the final course plan in structured Markdown."""
 
-# This function searches for a file named 'curriculum.pdf' in the current directory and its parent directories.
-def find_curriculum_file():
-    """Find curriculum.pdf in current directory or parent directories"""
-    current_dir = pathlib.Path.cwd()
+def generate_course_content(client, teaching_style, duration, difficulty_level, google_search_tool, system_prompt, filepath=None, course_content=None, task=None):
+    """
+    Generate course content using the LLM
     
-    # Check current directory first
-    curriculum_path = current_dir / "curriculum.pdf"
-    if curriculum_path.exists():
-        return curriculum_path
+    Args:
+        client: The Gemini client instance
+        teaching_style: Teaching style preference
+        duration: Course duration
+        difficulty_level: Difficulty level
+        google_search_tool: Google search tool for the LLM
+        system_prompt: System instruction for the LLM
+        filepath: Optional path to PDF file to include
+        course_content: Optional text content to include (for quiz generation, etc.)
+        task: Optional specific task description
+        
+    Returns:
+        Generated response from the LLM
+    """
+    # Build contents list - start with basic inputs
+    contents = [teaching_style, duration, difficulty_level]
     
-    # Check parent directory
-    parent_dir = current_dir.parent
-    curriculum_path = parent_dir / "curriculum.pdf"
-    if curriculum_path.exists():
-        return curriculum_path
+    # Add course content if provided (for quiz generation, analysis, etc.)
+    if course_content:
+        contents.append(f"COURSE CONTENT:\n{course_content}")
     
-    # Check root project directory (go up one more level)
-    root_dir = parent_dir.parent
-    curriculum_path = root_dir / "curriculum.pdf"
-    if curriculum_path.exists():
-        return curriculum_path
+    # Add task description if provided
+    if task:
+        contents.append(f"TASK: {task}")
     
-    return None
-
-# This is the main execution block that orchestrates the LLM interaction.
-try:
-    # Specify the fixed path to the curriculum PDF file.
-    filepath = pathlib.Path("Inputs and Outputs/curriculum.pdf")
+    # Add PDF content only if filepath is provided and file exists
+    if filepath and filepath.exists():
+        contents.append(types.Part.from_bytes(
+            data=filepath.read_bytes(),
+            mime_type='application/pdf',
+        ))
+    
     response = client.models.generate_content(
-        model='gemini-2.0-flash',
-        contents=[teaching_style, duration, difficulty_level,
-                    types.Part.from_bytes(
-                        data=filepath.read_bytes(),
-                        mime_type='application/pdf',
-                    )],
+        model='gemini-2.5-flash',
+        contents=contents,
         config=genai.types.GenerateContentConfig(
             tools=[google_search_tool],
             system_instruction=system_prompt,
         ),
     )
+    return response
+
+try:
+    filepath = pathlib.Path("Inputs and Outputs/curriculum.pdf")
+    response = generate_course_content(client, teaching_style, duration, difficulty_level, google_search_tool, system_prompt, filepath)
 
     print(response.text)
     
-    # Save the generated response to a text file for the master agent.
+    # Save the response to a text file for the master agent
     output_file_path = "Inputs and Outputs/planner_agent_instruction.txt"
     try:
         with open(output_file_path, 'w', encoding='utf-8') as f:
@@ -255,7 +261,7 @@ try:
     except Exception as e:
         print(f"Error saving response to file: {e}")
 
-    # Optional: Print grounding metadata (web search queries and chunks) if available in the response.
+    # Optional: Print grounding metadata if available
     if response.candidates:
         for candidate in response.candidates:
             if candidate.grounding_metadata and candidate.grounding_metadata.web_search_queries:
@@ -268,6 +274,5 @@ try:
                             print(f"  - Title: {chunk.web.title}, URL: {chunk.web.uri}")
 except Exception as e:
     print(f"An error occurred during LLM interaction: {e}")
-# This 'else' block executes if no exception occurred during the 'try' block, but in this context, it indicates an issue with loading input data for the LLM.
 else:
     print("Could not load input data for the LLM.")
