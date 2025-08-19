@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wand2, Upload, BookOpen, Target, Brain, Sparkles, FilePlus } from "lucide-react";
+import { Wand2, Upload, BookOpen, Target, Brain, Sparkles, FilePlus, Layers, ClipboardCheck, Download } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,6 +74,10 @@ export function PersonalizedGenerator() {
 
   const [generatedContent, setGeneratedContent] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedFlashcards, setGeneratedFlashcards] = useState<string>('');
+  const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
+  const [generatedQuiz, setGeneratedQuiz] = useState<string>('');
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
 
   // Derived state to check if all mandatory fields are filled
   const canGenerate = 
@@ -131,6 +135,88 @@ Continue building on this foundation by exploring advanced topics.`;
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  /**
+   * Generates flashcards content preview using current input selections.
+   */
+  const generateFlashcards = async () => {
+    if (!canGenerate) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter all mandatory details to generate flashcards.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingFlashcards(true);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const mockFlashcards = `# Flashcards: ${contentRequest.topic}\n\n` +
+        `Q: Key concept from ${contentRequest.topic}?\n` +
+        `A: Concise explanation tailored for ${contentRequest.contentType} at ` +
+        `${contentRequest.difficulty === 1 ? 'Foundational' : contentRequest.difficulty === 2 ? 'Intermediate' : 'Advanced'} level.\n\n` +
+        `Q: Another important idea?\n` +
+        `A: Short answer that reinforces understanding.`;
+
+      setGeneratedFlashcards(mockFlashcards);
+
+      toast({
+        title: "Flashcards Generated",
+        description: "Flashcards have been created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate flashcards. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingFlashcards(false);
+    }
+  };
+
+  /**
+   * Generates quiz content preview using current input selections.
+   */
+  const generateQuiz = async () => {
+    if (!canGenerate) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter all mandatory details to generate a quiz.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingQuiz(true);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const mockQuiz = `# Quiz: ${contentRequest.topic}\n\n` +
+        `1) Multiple-choice question related to ${contentRequest.topic}\n` +
+        `A) Option 1  B) Option 2  C) Option 3  D) Option 4\n\n` +
+        `2) Short answer question to check understanding.`;
+
+      setGeneratedQuiz(mockQuiz);
+
+      toast({
+        title: "Quiz Generated",
+        description: "Quiz has been created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate quiz. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingQuiz(false);
     }
   };
 
@@ -280,69 +366,213 @@ Continue building on this foundation by exploring advanced topics.`;
         </CardContent>
       </Card>
 
-      {/* Generated Content - now below both panels, centered and full width */}
+      {/* Generated Content - grouped into a single container */}
       <div className="flex justify-center">
-        <div className="w-full">
-          {/* Conditional Notification Text */}
-          {!canGenerate && (
-            <p className="text-red-500 text-sm mb-2">
-              Please enter mandatory details
-            </p>
-          )}
-          {/* Generate Button */}
-          <Button 
-            onClick={generatePersonalizedContent}
-            disabled={!canGenerate || isGenerating}
-            className="w-full mb-6"
-          >
-            {isGenerating ? (
-              <>
-                <Brain className="mr-2 h-4 w-4 animate-spin text-foreground" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Wand2 className="mr-2 h-4 w-4 text-foreground" />
-                Generate Course Content
-              </>
+        <Card className="w-full">
+          <CardContent>
+            {/* Conditional Notification Text */}
+            {!canGenerate && (
+              <p className="text-red-500 text-sm mb-2">
+                Please enter mandatory details
+              </p>
             )}
-          </Button>
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-foreground" />
-                Course Content Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {generatedContent ? (
-                <div className="space-y-4">
-                  <div className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap text-sm">
-                      {generatedContent}
-                    </pre>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Target className="mr-2 h-4 w-4 text-foreground" />
-                      Customize Further
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Export Content
-                    </Button>
-                  </div>
-                </div>
+            {/* Generate Button */}
+            <Button 
+              onClick={generatePersonalizedContent}
+              disabled={!canGenerate || isGenerating}
+              className="w-full mb-6"
+            >
+              {isGenerating ? (
+                <>
+                  <Brain className="mr-2 h-4 w-4 animate-spin text-foreground" />
+                  Generating...
+                </>
               ) : (
-                <div className="text-center py-8">
-                  <Brain className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    Generated content will appear here
-                  </p>
-                </div>
+                <>
+                  <Wand2 className="mr-2 h-4 w-4 text-foreground" />
+                  Generate Course Content
+                </>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </Button>
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-foreground" />
+                  Course Content Preview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {generatedContent ? (
+                  <div className="space-y-4">
+                    <div className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-sm">
+                        {generatedContent}
+                      </pre>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Target className="mr-2 h-4 w-4 text-foreground" />
+                        Customize Further
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        Export Content
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Brain className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      Generated content will appear here
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Button size="sm" className="mt-2" disabled={!generatedContent}>
+              <Download className="mr-2 h-4 w-4 text-foreground" />
+              Download
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Flashcards - grouped into a single container */}
+      <div className="flex justify-center">
+        <Card className="w-full">
+          <CardContent>
+            {!canGenerate && (
+              <p className="text-red-500 text-sm mb-2">
+                Please enter mandatory details
+              </p>
+            )}
+            <Button
+              onClick={generateFlashcards}
+              disabled={!canGenerate || isGeneratingFlashcards}
+              className="w-full mb-6"
+            >
+              {isGeneratingFlashcards ? (
+                <>
+                  <Brain className="mr-2 h-4 w-4 animate-spin text-foreground" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-4 w-4 text-foreground" />
+                  Generate Flashcards
+                </>
+              )}
+            </Button>
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-foreground" />
+                  Flashcards Content Preview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {generatedFlashcards ? (
+                  <div className="space-y-4">
+                    <div className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-sm">
+                        {generatedFlashcards}
+                      </pre>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Target className="mr-2 h-4 w-4 text-foreground" />
+                        Customize Further
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        Export Content
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Brain className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      Generated flashcards will appear here
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Button size="sm" className="mt-2" disabled={!generatedFlashcards}>
+              <Download className="mr-2 h-4 w-4 text-foreground" />
+              Download
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quiz - grouped into a single container */}
+      <div className="flex justify-center">
+        <Card className="w-full">
+          <CardContent>
+            {!canGenerate && (
+              <p className="text-red-500 text-sm mb-2">
+                Please enter mandatory details
+              </p>
+            )}
+            <Button
+              onClick={generateQuiz}
+              disabled={!canGenerate || isGeneratingQuiz}
+              className="w-full mb-6"
+            >
+              {isGeneratingQuiz ? (
+                <>
+                  <Brain className="mr-2 h-4 w-4 animate-spin text-foreground" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-4 w-4 text-foreground" />
+                  Generate Quiz
+                </>
+              )}
+            </Button>
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardCheck className="h-5 w-5 text-foreground" />
+                  Quiz Content Preview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {generatedQuiz ? (
+                  <div className="space-y-4">
+                    <div className="bg-muted rounded-lg p-4 max-h-96 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-sm">
+                        {generatedQuiz}
+                      </pre>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Target className="mr-2 h-4 w-4 text-foreground" />
+                        Customize Further
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        Export Content
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Brain className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      Generated quiz will appear here
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Button size="sm" className="mt-2" disabled={!generatedQuiz}>
+              <Download className="mr-2 h-4 w-4 text-foreground" />
+              Download
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
