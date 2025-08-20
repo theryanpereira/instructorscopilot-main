@@ -5,10 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
+// import Dashboard from "./pages/Dashboard";
 import Create from "./pages/Create";
-import Courses from "./pages/Courses";
-import Students from "./pages/Students";
+// import Courses from "./pages/Courses";
+// import Students from "./pages/Students";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
@@ -37,10 +37,13 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route element={<Layout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
+              {/* Commented out Dashboard route */}
+              {/* <Route path="/dashboard" element={<Dashboard />} /> */}
               <Route path="/create" element={<Create />} />
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/students" element={<Students />} />
+              {/* Commented out Courses route */}
+              {/* <Route path="/courses" element={<Courses />} /> */}
+              {/* Commented out Students route */}
+              {/* <Route path="/students" element={<Students />} /> */}
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="/privacy" element={<Privacy />} />

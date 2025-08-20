@@ -22,10 +22,10 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home, description: "Overview & insights" },
+  // { name: "Dashboard", href: "/dashboard", icon: Home, description: "Overview & insights" }, // Commented out Dashboard
   { name: "Create Content", href: "/create", icon: Sparkles, description: "AI course builder" },
-  { name: "My Courses", href: "/courses", icon: BookOpen, description: "Course library" },
-  { name: "Students", href: "/students", icon: Users, description: "Manage learners" },
+  // { name: "My Courses", href: "/courses", icon: BookOpen, description: "Course library" }, // Commented out My Courses
+  // { name: "Students", href: "/students", icon: Users, description: "Manage learners" }, // Commented out Students
 ];
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {

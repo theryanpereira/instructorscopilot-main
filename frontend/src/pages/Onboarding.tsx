@@ -239,9 +239,12 @@ const Onboarding = () => {
               <p className="text-xs text-muted-foreground">Setup your account</p>
             </div>
           </div>
+          {/* Commented out "Skip setup" button */}
+          {/*
           <Button variant="ghost" onClick={handleSkip}>
             Skip setup
           </Button>
+          */}
         </div>
       </header>
 
