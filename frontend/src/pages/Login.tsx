@@ -97,14 +97,15 @@ const Login = () => {
             </CardTitle>
             <CardDescription>
               {isLogin 
-                ? "Sign in to your Masterplan account" 
+                ? "Sign in with Email ID and a password" 
                 : "Join thousands of educators using AI to create better courses"
               }
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-4">
-            {/* Google Sign In */}
+            {/* Google Sign In (Commented out as per user request)*/}
+            {/*
             <Button 
               variant="outline" 
               className="w-full" 
@@ -130,7 +131,10 @@ const Login = () => {
               </svg>
               Continue with Google
             </Button>
+            */}
             
+            {/* Commented out "Or continue with email" section */}
+            {/*
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator />
@@ -141,6 +145,7 @@ const Login = () => {
                 </span>
               </div>
             </div>
+            */}
 
             {/* Email Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -222,9 +227,12 @@ const Login = () => {
 
               {isLogin && (
                 <div className="flex justify-end">
+                  {/* Commented out "Forgot password?" link */}
+                  {/*
                   <Button variant="link" className="px-0 text-sm">
                     Forgot password?
                   </Button>
+                  */}
                 </div>
               )}
 
@@ -234,6 +242,8 @@ const Login = () => {
             </form>
 
             <div className="text-center">
+              {/* Commented out "Don't have an account? Sign up" link */}
+              {/*
               <Button
                 variant="link"
                 onClick={() => setIsLogin(!isLogin)}
@@ -244,6 +254,7 @@ const Login = () => {
                   : "Already have an account? Sign in"
                 }
               </Button>
+              */}
             </div>
           </CardContent>
         </Card>
@@ -274,6 +285,9 @@ const saveUserIdToBackend = async (email: string) => {
       body: JSON.stringify(payload),
     });
 
+    // TEST CODE: Log response status
+    console.log("TEST CODE: Response status from /save-user-config:", response.status);
+
     if (response.ok) {
       console.log("User ID saved to backend successfully.");
       // TEST CODE: Log successful response
@@ -285,6 +299,8 @@ const saveUserIdToBackend = async (email: string) => {
       console.error("TEST CODE: /save-user-config error response:", errorData);
     }
   } catch (error) {
+    // TEST CODE: Log error in catch block
+    console.error("TEST CODE: Error caught in saveUserIdToBackend:", error);
     console.error("Error sending user ID to backend:", error);
     // TEST CODE: Log catch error
     console.error("TEST CODE: Error in saveUserIdToBackend catch block:", error);
