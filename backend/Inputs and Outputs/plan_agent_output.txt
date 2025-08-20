@@ -1,5 +1,0 @@
-=== [CoursePlannerAgent] ===
-
-I am unable to generate the course plan at this moment. The necessary input file `planner_agent_instruction.txt` was not found. This file is crucial as it contains the course topic, curriculum details, mandatory difficulty level, teaching style, and other specifications required to create a comprehensive plan.
-
-Please ensure the `planner_agent_instruction.txt` file is available and correctly specified at the project root. Once this information is provided, I can proceed with generating the detailed course content plan.

@@ -36,73 +36,15 @@ def save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_st
         pass
 
 
-# Try to load existing user inputs
-saved_inputs = load_user_inputs()
+def get_gemini_client() -> genai.Client:
+    """Return an authenticated Gemini client using GEMINI_API_KEY from env."""
+    return genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
-if saved_inputs:
-    print("Using saved user configuration:")
-    print(f"User Name: {saved_inputs['user_name']}")
-    print(f"User ID: {saved_inputs['user_id']}")
-    print(f"Difficulty Level: {saved_inputs['difficulty_level']}")
-    print(f"Duration: {saved_inputs['duration']}")
-    print(f"Teaching Style: {saved_inputs['teaching_style']}")
-    
-    user_name = saved_inputs['user_name']
-    user_id = saved_inputs['user_id']
-    difficulty_level = saved_inputs['difficulty_level']
-    duration = saved_inputs['duration']
-    teaching_style = saved_inputs['teaching_style']
-    print("Using existing configuration.")
-else:
-    print("First time setup - please provide your details:")
-    
-    while True:
-        user_name = input("Give a user name: ")
-        if user_name.strip() == "":
-            print("User name cannot be empty. Please enter a valid name.")
-        else:
-            break
+def get_google_search_tool() -> genai.types.Tool:
+    """Return a Google Search tool usable by Gemini for grounding."""
+    return genai.types.Tool(google_search=genai.types.GoogleSearch())
 
-
-    while True:
-        user_id = input("Give a user ID (Example: user_id_5678): ")
-        if user_id.strip() == "":
-            print("User ID cannot be empty. Please enter a valid ID.")
-        else:
-            break
-
-
-    difficulty_level = input("Enter the difficulty level (Foundational, Intermediate, Advanced): ")
-    if difficulty_level.lower() in ['none',''] or difficulty_level.lower() not in ['foundational', 'intermediate', 'advanced']:
-        difficulty_level = "Foundational"  # Default to Foundational if none specified
-
-
-    while True:
-        duration = input("Enter the desired duration for the course (e.g., 4 weeks, 8 weeks): ")
-        if duration == "" or duration.lower() == "none":
-            print("Duration cannot be empty. Please enter a valid duration.")
-        else:
-            break
-
-
-    teaching_style = input("Enter preferred teaching style (e.g., Exploratory & Guided, Project-Based / Hands-On, Conceptual & Conversational): ")
-    if teaching_style.lower() == "none":
-        teaching_style = "Exploratory & Guided"  # Default to Exploratory & Guided if none specified
-    
-    # Save inputs for future runs
-    save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_style)
-    print("Configuration saved for future runs.")
-
-
-print("Thank you for providing the inputs. Processing your request...")
-
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
-# Configure Google Search as a tool for grounding
-google_search_tool = genai.types.Tool(
-    google_search=genai.types.GoogleSearch()
-)
 
 system_prompt = """You are a course design assistant.
 
@@ -200,6 +142,7 @@ Create a **cohesive, learner-aligned course plan** that:
 
 Respond only after carefully analyzing all inputs and formatting the final course plan in structured Markdown."""
 
+
 def generate_course_content(client, teaching_style, duration, difficulty_level, google_search_tool, system_prompt, filepath=None, course_content=None, task=None):
     """
     Generate course content using the LLM
@@ -246,33 +189,104 @@ def generate_course_content(client, teaching_style, duration, difficulty_level, 
     )
     return response
 
-try:
-    filepath = pathlib.Path("Inputs and Outputs/curriculum.pdf")
-    response = generate_course_content(client, teaching_style, duration, difficulty_level, google_search_tool, system_prompt, filepath)
 
-    print(response.text)
-    
-    # Save the response to a text file for the master agent
-    output_file_path = "Inputs and Outputs/planner_agent_instruction.txt"
+def _run_standalone():
+    """Standalone execution to produce planner_agent_instruction.txt (preserves old behavior)."""
+    # Try to load existing user inputs
+    saved_inputs = load_user_inputs()
+
+    if saved_inputs:
+        print("Using saved user configuration:")
+        print(f"User Name: {saved_inputs['user_name']}")
+        print(f"User ID: {saved_inputs['user_id']}")
+        print(f"Difficulty Level: {saved_inputs['difficulty_level']}")
+        print(f"Duration: {saved_inputs['duration']}")
+        print(f"Teaching Style: {saved_inputs['teaching_style']}")
+
+        user_name = saved_inputs['user_name']
+        user_id = saved_inputs['user_id']
+        difficulty_level = saved_inputs['difficulty_level']
+        duration = saved_inputs['duration']
+        teaching_style = saved_inputs['teaching_style']
+        print("Using existing configuration.")
+    else:
+        print("First time setup - please provide your details:")
+
+        while True:
+            user_name = input("Give a user name: ")
+            if user_name.strip() == "":
+                print("User name cannot be empty. Please enter a valid name.")
+            else:
+                break
+
+        while True:
+            user_id = input("Give a user ID (Example: user_id_5678): ")
+            if user_id.strip() == "":
+                print("User ID cannot be empty. Please enter a valid ID.")
+            else:
+                break
+
+        difficulty_level = input("Enter the difficulty level (Foundational, Intermediate, Advanced): ")
+        if difficulty_level.lower() in ['none', ''] or difficulty_level.lower() not in ['foundational', 'intermediate', 'advanced']:
+            difficulty_level = "Foundational"  # Default to Foundational if none specified
+
+        while True:
+            duration = input("Enter the desired duration for the course (e.g., 4 weeks, 8 weeks): ")
+            if duration == "" or duration.lower() == "none":
+                print("Duration cannot be empty. Please enter a valid duration.")
+            else:
+                break
+
+        teaching_style = input("Enter preferred teaching style (e.g., Exploratory & Guided, Project-Based / Hands-On, Conceptual & Conversational): ")
+        if teaching_style.lower() == "none":
+            teaching_style = "Exploratory & Guided"  # Default to Exploratory & Guided if none specified
+
+        # Save inputs for future runs
+        save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_style)
+        print("Configuration saved for future runs.")
+
+    print("Thank you for providing the inputs. Processing your request...")
+
+    client = get_gemini_client()
+    google_search_tool = get_google_search_tool()
+
     try:
-        with open(output_file_path, 'w', encoding='utf-8') as f:
-            f.write(response.text)
-        print(f"\nResponse saved to: {output_file_path}")
-    except Exception as e:
-        print(f"Error saving response to file: {e}")
+        filepath = pathlib.Path("Inputs and Outputs/curriculum.pdf")
+        response = generate_course_content(
+            client,
+            teaching_style,
+            duration,
+            difficulty_level,
+            google_search_tool,
+            system_prompt,
+            filepath,
+        )
 
-    # Optional: Print grounding metadata if available
-    if response.candidates:
-        for candidate in response.candidates:
-            if candidate.grounding_metadata and candidate.grounding_metadata.web_search_queries:
-                print("\n--- Grounding Metadata ---")
-                print("Web Search Queries:", candidate.grounding_metadata.web_search_queries)
-                if candidate.grounding_metadata.grounding_chunks:
-                    print("Grounding Chunks (Web):")
-                    for chunk in candidate.grounding_metadata.grounding_chunks:
-                        if chunk.web:
-                            print(f"  - Title: {chunk.web.title}, URL: {chunk.web.uri}")
-except Exception as e:
-    print(f"An error occurred during LLM interaction: {e}")
-else:
-    print("Could not load input data for the LLM.")
+        print(response.text)
+
+        # Save the response to a text file for the master agent
+        output_file_path = "Inputs and Outputs/planner_agent_instruction.txt"
+        try:
+            with open(output_file_path, 'w', encoding='utf-8') as f:
+                f.write(response.text)
+            print(f"\nResponse saved to: {output_file_path}")
+        except Exception as e:
+            print(f"Error saving response to file: {e}")
+
+        # Optional: Print grounding metadata if available
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate.grounding_metadata and candidate.grounding_metadata.web_search_queries:
+                    print("\n--- Grounding Metadata ---")
+                    print("Web Search Queries:", candidate.grounding_metadata.web_search_queries)
+                    if candidate.grounding_metadata.grounding_chunks:
+                        print("Grounding Chunks (Web):")
+                        for chunk in candidate.grounding_metadata.grounding_chunks:
+                            if chunk.web:
+                                print(f"  - Title: {chunk.web.title}, URL: {chunk.web.uri}")
+    except Exception as e:
+        print(f"An error occurred during LLM interaction: {e}")
+
+
+if __name__ == "__main__":
+    _run_standalone()
