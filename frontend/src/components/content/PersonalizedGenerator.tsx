@@ -169,7 +169,8 @@ export function PersonalizedGenerator() {
     contentRequest.topic.trim() !== '' &&
     contentRequest.difficulty !== null &&
     contentRequest.teachingStyle !== null &&
-    contentRequest.curriculumFileSelected;
+    contentRequest.curriculumFileSelected &&
+    contentRequest.duration > 0; // Added check for duration
 
   const generatePersonalizedContent = async () => {
     if (!canGenerate) {
