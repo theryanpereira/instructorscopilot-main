@@ -1,116 +1,82 @@
-from google import genai
+# Import necessary libraries for Google Gemini API, environment variables, and file operations
+import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 import pathlib
-from google.genai import types
 import json
 
+# Load environment variables from .env file
 load_dotenv()
 
-def load_user_inputs():
-    """Load user inputs from file if exists"""
+# Function to load user configuration from a JSON file
+def _load_user_config():
+    """Load user inputs from file if exists, return empty dict if not found or corrupted"""
     config_file = "user_config.json"
+    # Check if the configuration file exists
     if os.path.exists(config_file):
         try:
+            # Open and load the JSON data from the file
             with open(config_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except:
-            return None
-    return None
+        # Handle specific error for corrupted JSON
+        except json.JSONDecodeError:
+            print(f"Warning: user_config.json is corrupted. Starting with an empty configuration.")
+            return {}
+        # Handle any other exceptions during file loading
+        except Exception as e:
+            print(f"Error loading user_config.json: {e}. Starting with an empty configuration.")
+            return {}
+    # Return an empty dictionary if the file does not exist
+    return {}
 
-
-def save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_style):
+# Function to save user configuration to a JSON file
+def _save_user_config(config_data):
     """Save user inputs to file"""
     config_file = "user_config.json"
-    config_data = {
-        "user_name": user_name,
-        "user_id": user_id,
-        "difficulty_level": difficulty_level,
-        "duration": duration,
-        "teaching_style": teaching_style
-    }
     try:
+        # Open and dump the dictionary data to the JSON file
         with open(config_file, 'w', encoding='utf-8') as f:
             json.dump(config_data, f, indent=2)
-    except:
-        pass
+    # Handle any exceptions during file saving
+    except Exception as e:
+        print(f"Error saving user_config.json: {e}")
 
+# Function to update user ID and user name in the configuration
+def update_user_id_and_name(user_id, user_name):
+    # TEST CODE: Log data received by update_user_id_and_name
+    print(f"TEST CODE: update_user_id_and_name called with user_id='{user_id}', user_name='{user_name}'")
+    # Load the current configuration
+    config = _load_user_config()
+    # Update the user_id and user_name fields
+    config["user_id"] = user_id
+    config["user_name"] = user_name
+    # Save the updated configuration
+    _save_user_config(config)
 
-# Try to load existing user inputs
-saved_inputs = load_user_inputs()
+# Function to update course-specific settings in the configuration
+def update_course_settings(user_id, course_title, difficulty_level, duration, teaching_style):
+    # TEST CODE: Log data received by update_course_settings
+    print(f"TEST CODE: update_course_settings called with user_id='{user_id}', course_title='{course_title}', difficulty_level='{difficulty_level}', duration='{duration}', teaching_style='{teaching_style}'")
+    # In a multi-user scenario, user_id would be used to find the specific user's config.
+    # For now, assuming user_config.json stores the current active user's config.
+    # Load the current configuration
+    config = _load_user_config()
+    # Update the course-related fields
+    config["course_title"] = course_title
+    config["difficulty_level"] = difficulty_level
+    config["duration"] = duration
+    config["teaching_style"] = teaching_style
+    # Save the updated configuration
+    _save_user_config(config)
 
-
-if saved_inputs:
-    print("Using saved user configuration:")
-    print(f"User Name: {saved_inputs['user_name']}")
-    print(f"User ID: {saved_inputs['user_id']}")
-    print(f"Difficulty Level: {saved_inputs['difficulty_level']}")
-    print(f"Duration: {saved_inputs['duration']}")
-    print(f"Teaching Style: {saved_inputs['teaching_style']}")
-    
-    user_name = saved_inputs['user_name']
-    user_id = saved_inputs['user_id']
-    difficulty_level = saved_inputs['difficulty_level']
-    duration = saved_inputs['duration']
-    teaching_style = saved_inputs['teaching_style']
-    print("Using existing configuration.")
-else:
-    print("First time setup - please provide your details:")
-    
-    while True:
-        user_name = input("Give a user name: ")
-        if user_name.strip() == "":
-            print("User name cannot be empty. Please enter a valid name.")
-        else:
-            break
-
-
-    while True:
-        user_id = input("Give a user ID (Example: user_id_5678): ")
-        if user_id.strip() == "":
-            print("User ID cannot be empty. Please enter a valid ID.")
-        else:
-            break
-
-
-    difficulty_level = input("Enter the difficulty level (Foundational, Intermediate, Advanced): ")
-    if difficulty_level.lower() in ['none',''] or difficulty_level.lower() not in ['foundational', 'intermediate', 'advanced']:
-        difficulty_level = "Foundational"  # Default to Foundational if none specified
-
-
-    while True:
-        duration = input("Enter the desired duration for the course (e.g., 4 weeks, 8 weeks): ")
-        if duration == "" or duration.lower() == "none":
-            print("Duration cannot be empty. Please enter a valid duration.")
-        else:
-            break
-
-
-    teaching_style = input("Enter preferred teaching style (e.g., Exploratory & Guided, Project-Based / Hands-On, Conceptual & Conversational): ")
-    if teaching_style.lower() == "none":
-        teaching_style = "Exploratory & Guided"  # Default to Exploratory & Guided if none specified
-    
-    # Save inputs for future runs
-    save_user_inputs(user_name, user_id, difficulty_level, duration, teaching_style)
-    print("Configuration saved for future runs.")
-
-
-print("Thank you for providing the inputs. Processing your request...")
-
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
-# Configure Google Search as a tool for grounding
-google_search_tool = genai.types.Tool(
-    google_search=genai.types.GoogleSearch()
-)
-
+# System prompt for the LLM, defining its role and responsibilities
 system_prompt = """You are a course design assistant.
 
 You will be provided with the following **mandatory inputs**:
 1. A **curriculum document** in PDF format containing existing course content (e.g., syllabi, outlines, topics, activities, or readings)
 2. A **course topic or name** describing what the learner or instructor wants the course to focus on
 3. A selected **difficulty level** (see below)
-4. A selected **teaching style** (see below) 
+4. A selected **teaching style** (see below)
 5. A selected **duration** (see below)
 
 ---
@@ -200,6 +166,7 @@ Create a **cohesive, learner-aligned course plan** that:
 
 Respond only after carefully analyzing all inputs and formatting the final course plan in structured Markdown."""
 
+# Function to generate course content using the LLM
 def generate_course_content(client, teaching_style, duration, difficulty_level, google_search_tool, system_prompt, filepath=None, course_content=None, task=None):
     """
     Generate course content using the LLM
@@ -231,11 +198,12 @@ def generate_course_content(client, teaching_style, duration, difficulty_level, 
     
     # Add PDF content only if filepath is provided and file exists
     if filepath and filepath.exists():
-        contents.append(types.Part.from_bytes(
+        contents.append(genai.types.Part.from_bytes(
             data=filepath.read_bytes(),
             mime_type='application/pdf',
         ))
     
+    # Generate content using the Gemini model
     response = client.models.generate_content(
         model='gemini-2.5-flash',
         contents=contents,
@@ -246,33 +214,270 @@ def generate_course_content(client, teaching_style, duration, difficulty_level, 
     )
     return response
 
-try:
-    filepath = pathlib.Path("Inputs and Outputs/curriculum.pdf")
-    response = generate_course_content(client, teaching_style, duration, difficulty_level, google_search_tool, system_prompt, filepath)
 
-    print(response.text)
-    
-    # Save the response to a text file for the master agent
-    output_file_path = "Inputs and Outputs/planner_agent_instruction.txt"
+# Main execution block when the script is run directly
+if __name__ == "__main__":
+    # Try to load existing user inputs
+    saved_inputs = _load_user_config()
+
+    # If saved inputs exist, use them
+    if saved_inputs:
+        print("Using saved user configuration:")
+        # Print all loaded configuration details
+        print(f"User Name: {saved_inputs['user_name']}")
+        print(f"User ID: {saved_inputs['user_id']}")
+        print(f"Difficulty Level: {saved_inputs['difficulty_level']}")
+        print(f"Duration: {saved_inputs['duration']}")
+        print(f"Teaching Style: {saved_inputs['teaching_style']}")
+        print(f"Course Title: {saved_inputs['course_title']}")
+
+        # Assign loaded values to variables
+        user_name = saved_inputs['user_name']
+        user_id = saved_inputs['user_id']
+        difficulty_level = saved_inputs['difficulty_level']
+        duration = saved_inputs['duration']
+        teaching_style = saved_inputs['teaching_style']
+        course_title = saved_inputs['course_title']
+        print("Using existing configuration.")
+    # If no saved inputs, prompt the user for details
+    else:
+        print("First time setup - please provide your details:")
+
+        # Loop to get valid user ID
+        while True:
+            user_id = input("Give a user ID (Example: user_id_5678): ")
+            if user_id.strip() == "":
+                print("User ID cannot be empty. Please enter a valid ID.")
+            else:
+                break
+        
+        # Loop to get valid user name
+        while True:
+            user_name = input("Give a user name: ")
+            if user_name.strip() == "":
+                print("User name cannot be empty. Please enter a valid name.")
+            else:
+                break
+
+        # Loop to get valid course title
+        while True:
+            course_title = input("Enter the course topic or title: ")
+            if course_title.lower() == "none" or course_title.strip() == "":
+                print("Course Title cannot be empty. Please enter a valid title.")
+            else:
+                break
+
+        # Loop to get valid difficulty level
+        while True:
+            difficulty_level = input("Enter the difficulty level (Foundational, Intermediate, Advanced): ")
+            if difficulty_level.lower() in ['none',''] or difficulty_level.lower() not in ['foundational', 'intermediate', 'advanced']:
+                print("Difficulty Level cannot be empty. Please enter a valid difficulty level.")
+            else:
+                break
+
+        # Loop to get valid duration
+        while True:
+            duration = input("Enter the desired duration for the course (e.g., 4 weeks, 8 weeks): ")
+            if duration == "" or duration.lower() == "none":
+                print("Duration cannot be empty. Please enter a valid duration.")
+            else:
+                break
+
+        # Loop to get valid teaching style
+        while True:
+            teaching_style = input("Enter preferred teaching style (e.g., Exploratory & Guided, Project-Based / Hands-On, Conceptual & Conversational): ")
+            if teaching_style.lower() == "none" or teaching_style.strip() == "":
+                print("Teaching Style cannot be empty. Please enter a valid teaching style.")
+            else:
+                break
+
+
+        # Save newly collected inputs using the update functions
+        update_user_id_and_name(user_id, user_name)
+        update_course_settings(user_id, course_title, difficulty_level, duration, teaching_style)
+        print("Configuration saved for future runs.")
+
+    # Initialize client and tools only when running as main script
+    client = genai.Client() # Removed explicit api_key as it's picked from environment
+
+    # Configure Google Search as a tool for grounding
+    google_search_tool = genai.types.Tool(
+        google_search=genai.types.GoogleSearch()
+    )
+
+    print("Thank you for providing the inputs. Processing your request...")
+
     try:
-        with open(output_file_path, 'w', encoding='utf-8') as f:
-            f.write(response.text)
-        print(f"\nResponse saved to: {output_file_path}")
-    except Exception as e:
-        print(f"Error saving response to file: {e}")
+        # Define the path to the curriculum PDF
+        filepath = pathlib.Path("Inputs and Outputs/curriculum.pdf")
+        # Generate course content using the LLM with collected inputs
+        response = generate_course_content(client, teaching_style, duration, difficulty_level, google_search_tool, system_prompt, filepath)
 
-    # Optional: Print grounding metadata if available
-    if response.candidates:
-        for candidate in response.candidates:
-            if candidate.grounding_metadata and candidate.grounding_metadata.web_search_queries:
-                print("\n--- Grounding Metadata ---")
-                print("Web Search Queries:", candidate.grounding_metadata.web_search_queries)
-                if candidate.grounding_metadata.grounding_chunks:
-                    print("Grounding Chunks (Web):")
-                    for chunk in candidate.grounding_metadata.grounding_chunks:
-                        if chunk.web:
-                            print(f"  - Title: {chunk.web.title}, URL: {chunk.web.uri}")
-except Exception as e:
-    print(f"An error occurred during LLM interaction: {e}")
-else:
-    print("Could not load input data for the LLM.")
+        # Print the LLM's response
+        print(response.text)
+
+        # Save the response to a text file for the planner agent
+        output_file_path = "Inputs and Outputs/planner_agent_instruction.txt"
+        try:
+            with open(output_file_path, 'w', encoding='utf-8') as f:
+                f.write(response.text)
+            print(f"\nResponse saved to: {output_file_path}")
+        # Handle errors during file saving
+        except Exception as e:
+            print(f"Error saving response to file: {e}")
+
+        # Optional: Print grounding metadata if available from the LLM response
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate.grounding_metadata and candidate.grounding_metadata.web_search_queries:
+                    print("\n--- Grounding Metadata ---")
+                    print("Web Search Queries:", candidate.grounding_metadata.web_search_queries)
+                    if candidate.grounding_metadata.grounding_chunks:
+                        print("Grounding Chunks (Web):")
+                        for chunk in candidate.grounding_metadata.grounding_chunks:
+                            if chunk.web:
+                                print(f"  - Title: {chunk.web.title}, URL: {chunk.web.uri}")
+    # Handle general exceptions during LLM interaction
+    except Exception as e:
+        print(f"An error occurred during LLM interaction: {e}")
+
+# TEST CODE: Function to verify inputs by reading user_config.json
+def _read_and_print_config_for_testing():
+    print("\n--- TEST CODE: Verifying user_config.json contents ---")
+    config = _load_user_config()
+    if config:
+        print("Loaded user_config.json:")
+        for key, value in config.items():
+            print(f"  {key}: {value}")
+    else:
+        print("user_config.json not found or is empty/corrupted.")
+    print("--- END TEST CODE ---\n")
+
+# Main execution block when the script is run directly
+if __name__ == "__main__":
+    # Try to load existing user inputs
+    saved_inputs = _load_user_config()
+
+    # If saved inputs exist, use them
+    if saved_inputs:
+        print("Using saved user configuration:")
+        # Print all loaded configuration details
+        print(f"User Name: {saved_inputs['user_name']}")
+        print(f"User ID: {saved_inputs['user_id']}")
+        print(f"Difficulty Level: {saved_inputs['difficulty_level']}")
+        print(f"Duration: {saved_inputs['duration']}")
+        print(f"Teaching Style: {saved_inputs['teaching_style']}")
+        print(f"Course Title: {saved_inputs['course_title']}")
+
+        # Assign loaded values to variables
+        user_name = saved_inputs['user_name']
+        user_id = saved_inputs['user_id']
+        difficulty_level = saved_inputs['difficulty_level']
+        duration = saved_inputs['duration']
+        teaching_style = saved_inputs['teaching_style']
+        course_title = saved_inputs['course_title']
+        print("Using existing configuration.")
+    # If no saved inputs, prompt the user for details
+    else:
+        print("First time setup - please provide your details:")
+
+        # Loop to get valid user ID
+        while True:
+            user_id = input("Give a user ID (Example: user_id_5678): ")
+            if user_id.strip() == "":
+                print("User ID cannot be empty. Please enter a valid ID.")
+            else:
+                break
+        
+        # Loop to get valid user name
+        while True:
+            user_name = input("Give a user name: ")
+            if user_name.strip() == "":
+                print("User name cannot be empty. Please enter a valid name.")
+            else:
+                break
+
+        # Loop to get valid course title
+        while True:
+            course_title = input("Enter the course topic or title: ")
+            if course_title.lower() == "none" or course_title.strip() == "":
+                print("Course Title cannot be empty. Please enter a valid title.")
+            else:
+                break
+
+        # Loop to get valid difficulty level
+        while True:
+            difficulty_level = input("Enter the difficulty level (Foundational, Intermediate, Advanced): ")
+            if difficulty_level.lower() in ['none',''] or difficulty_level.lower() not in ['foundational', 'intermediate', 'advanced']:
+                print("Difficulty Level cannot be empty. Please enter a valid difficulty level.")
+            else:
+                break
+
+        # Loop to get valid duration
+        while True:
+            duration = input("Enter the desired duration for the course (e.g., 4 weeks, 8 weeks): ")
+            if duration == "" or duration.lower() == "none":
+                print("Duration cannot be empty. Please enter a valid duration.")
+            else:
+                break
+
+        # Loop to get valid teaching style
+        while True:
+            teaching_style = input("Enter preferred teaching style (e.g., Exploratory & Guided, Project-Based / Hands-On, Conceptual & Conversational): ")
+            if teaching_style.lower() == "none" or teaching_style.strip() == "":
+                print("Teaching Style cannot be empty. Please enter a valid teaching style.")
+            else:
+                break
+
+
+        # Save newly collected inputs using the update functions
+        update_user_id_and_name(user_id, user_name)
+        update_course_settings(user_id, course_title, difficulty_level, duration, teaching_style)
+        print("Configuration saved for future runs.")
+
+    # Initialize client and tools only when running as main script
+    client = genai.Client() # Removed explicit api_key as it's picked from environment
+
+    # Configure Google Search as a tool for grounding
+    google_search_tool = genai.types.Tool(
+        google_search=genai.types.GoogleSearch()
+    )
+
+    print("Thank you for providing the inputs. Processing your request...")
+
+    try:
+        # Define the path to the curriculum PDF
+        filepath = pathlib.Path("Inputs and Outputs/curriculum.pdf")
+        # Generate course content using the LLM with collected inputs
+        response = generate_course_content(client, teaching_style, duration, difficulty_level, google_search_tool, system_prompt, filepath)
+
+        # Print the LLM's response
+        print(response.text)
+
+        # Save the response to a text file for the planner agent
+        output_file_path = "Inputs and Outputs/planner_agent_instruction.txt"
+        try:
+            with open(output_file_path, 'w', encoding='utf-8') as f:
+                f.write(response.text)
+            print(f"\nResponse saved to: {output_file_path}")
+        # Handle errors during file saving
+        except Exception as e:
+            print(f"Error saving response to file: {e}")
+
+        # Optional: Print grounding metadata if available from the LLM response
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate.grounding_metadata and candidate.grounding_metadata.web_search_queries:
+                    print("\n--- Grounding Metadata ---")
+                    print("Web Search Queries:", candidate.grounding_metadata.web_search_queries)
+                    if candidate.grounding_metadata.grounding_chunks:
+                        print("Grounding Chunks (Web):")
+                        for chunk in candidate.grounding_metadata.grounding_chunks:
+                            if chunk.web:
+                                print(f"  - Title: {chunk.web.title}, URL: {chunk.web.uri}")
+    # Handle general exceptions during LLM interaction
+    except Exception as e:
+        print(f"An error occurred during LLM interaction: {e}")
+
+    # TEST CODE: Read and print the final user_config.json contents
+    _read_and_print_config_for_testing()

@@ -21,7 +21,7 @@ const Login = () => {
     name: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Mock authentication - in real app, this would call your auth service
@@ -31,6 +31,9 @@ const Login = () => {
         title: "Welcome back!",
         description: "You've been successfully logged in.",
       });
+      await saveUserIdToBackend(formData.email);
+      // TEST CODE: Save user_id to localStorage for subsequent pages
+      localStorage.setItem('user_id', formData.email);
       navigate("/onboarding");
     } else {
       // Sign up logic
@@ -46,6 +49,9 @@ const Login = () => {
         title: "Account created!",
         description: "Welcome to Masterplan. Let's get you started.",
       });
+      await saveUserIdToBackend(formData.email);
+      // TEST CODE: Save user_id to localStorage for subsequent pages
+      localStorage.setItem('user_id', formData.email);
       navigate("/onboarding");
     }
   };
@@ -245,6 +251,44 @@ const Login = () => {
       <Footer />
     </div>
   );
+};
+
+const saveUserIdToBackend = async (email: string) => {
+  try {
+    const payload = {
+      user_id: email,
+      // user_name: email.split('@')[0], // Removed as per new flow
+      // difficulty_level: "Foundational", // Removed as per new flow
+      // duration: "4 weeks", // Removed as per new flow
+      // teaching_style: "Exploratory & Guided", // Removed as per new flow
+    };
+
+    // TEST CODE: Log payload before sending
+    console.log("TEST CODE: Sending payload to /save-user-config:", payload);
+
+    const response = await fetch('/save-user-config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      console.log("User ID saved to backend successfully.");
+      // TEST CODE: Log successful response
+      console.log("TEST CODE: /save-user-config success response:", await response.json());
+    } else {
+      const errorData = await response.json();
+      console.error("Failed to save user ID to backend.", errorData);
+      // TEST CODE: Log error response
+      console.error("TEST CODE: /save-user-config error response:", errorData);
+    }
+  } catch (error) {
+    console.error("Error sending user ID to backend:", error);
+    // TEST CODE: Log catch error
+    console.error("TEST CODE: Error in saveUserIdToBackend catch block:", error);
+  }
 };
 
 export default Login;

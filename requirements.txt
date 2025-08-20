@@ -5,3 +5,5 @@ fastapi
 reportlab
 python-docx
 Pillow 
+
+uvicorn 

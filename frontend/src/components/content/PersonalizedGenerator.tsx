@@ -24,8 +24,64 @@ interface ContentRequest {
 export function PersonalizedGenerator() {
   const { toast } = useToast();
   
+  // Async function to save course settings to the backend
+  const saveCourseSettingsToBackend = async (
+    course_title: string,
+    difficulty_level: number | null,
+    duration: number,
+    teaching_style: string | null
+  ) => {
+    // Retrieve user_id from localStorage
+    const user_id = localStorage.getItem('user_id');
+    if (!user_id) {
+      console.error("Error: user_id not found in localStorage. Cannot save course settings.");
+      toast({
+        title: "Error",
+        description: "User session not found. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const payload = {
+        user_id: user_id,
+        course_title: course_title,
+        difficulty_level: difficulty_level,
+        duration: duration,
+        teaching_style: teaching_style,
+      };
+
+      // TEST CODE: Log payload before sending
+      console.log("TEST CODE: Sending payload to /save-course-settings:", payload);
+
+      const response = await fetch('/save-course-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        console.log("Course settings saved to backend successfully.");
+        // TEST CODE: Log successful response
+        console.log("TEST CODE: /save-course-settings success response:", await response.json());
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to save course settings to backend.", errorData);
+        // TEST CODE: Log error response
+        console.error("TEST CODE: /save-course-settings error response:", errorData);
+      }
+    } catch (error) {
+      console.error("Error sending course settings to backend:", error);
+      // TEST CODE: Log catch error
+      console.error("TEST CODE: Error in saveCourseSettingsToBackend catch block:", error);
+    }
+  };
+
   // File validation handlers
-  const handleFileChange = (e, allowedTypes, id) => { // Changed 'label' to 'id'
+  const handleFileChange = async (e, allowedTypes, id) => { // Changed 'label' to 'id'
     console.log(`handleFileChange called for id: ${id}`);
     const file = e.target.files?.[0];
     console.log("Selected file:", file);
@@ -33,6 +89,39 @@ export function PersonalizedGenerator() {
     if (id === 'curriculum') { // Check against id
       const newFileSelected = !!file;
       const newFileName = file ? file.name : null;
+
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const response = await fetch('/upload-curriculum/', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            toast({
+              title: "Upload Successful",
+              description: "",
+            });
+          } else {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "File upload failed.");
+          }
+        } catch (error) {
+          toast({
+            title: "Upload Failed",
+            description: `Error uploading file: ${error.message}`,
+            variant: 'destructive',
+          });
+          e.target.value = ''; // Clear the input field on error
+          setContentRequest(prev => ({ ...prev, curriculumFileSelected: false, curriculumFileName: null }));
+          return;
+        }
+      }
+
       setContentRequest(prev => {
         console.log(`Updating curriculum state: selected=${newFileSelected}, name=${newFileName}`);
         return {
@@ -66,7 +155,7 @@ export function PersonalizedGenerator() {
     topic: '',
     contentType: 'lesson',
     difficulty: null,
-    duration: 30,
+    duration: 0,
     teachingStyle: null,
     curriculumFileSelected: false, // Initialize to false
     curriculumFileName: null, // Initialize file name
@@ -95,6 +184,14 @@ export function PersonalizedGenerator() {
     setIsGenerating(true);
 
     try {
+      // Save course settings to the backend before generating content
+      await saveCourseSettingsToBackend(
+        contentRequest.topic,
+        contentRequest.difficulty,
+        contentRequest.duration,
+        contentRequest.teachingStyle
+      );
+
       // Simulate AI content generation
       await new Promise(resolve => setTimeout(resolve, 2000));
       
@@ -126,7 +223,7 @@ Continue building on this foundation by exploring advanced topics.`;
     } catch (error) {
       toast({
         title: "Generation Failed",
-        description: "Failed to generate content. Please try again.",
+        description: `Failed to generate content: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -275,7 +372,7 @@ Continue building on this foundation by exploring advanced topics.`;
               <Input
                 id="course-duration"
                 type="number"
-                placeholder="8"
+                placeholder="1-8"
                 value={contentRequest.duration}
                 onChange={(e) => {
                   const value = Number(e.target.value);
