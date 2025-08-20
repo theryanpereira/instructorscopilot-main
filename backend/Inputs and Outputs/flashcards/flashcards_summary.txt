@@ -1,0 +1,137 @@
+📚 FLASHCARDS SUMMARY
+============================================================
+
+
+🗓️ WEEK 1
+----------------------------------------
+
+📋 Card #1: Intelligent Agents
+❓ Q: What is the key distinction between a rational agent and a classical AI agent?
+✅ A: A rational agent acts to achieve the best expected outcome based on its perceptions, maximizing a performance measure. Classical AI agents often follow pre-programmed rules or symbolic manipulation without inherent goal-oriented rationality.
+🎯 Difficulty: Medium
+🏷️ Tags: agents, rationality, AI basics
+
+
+📋 Card #2: Agent Architectures
+❓ Q: Describe the core difference between a model-based reflex agent and a utility-based agent.
+✅ A: A model-based reflex agent maintains an internal state model to handle partial observability. A utility-based agent further uses a utility function to choose actions that maximize its expected utility, considering future outcomes.
+🎯 Difficulty: Medium
+🏷️ Tags: agents, architectures, comparison
+
+
+📋 Card #3: Environment Properties
+❓ Q: Explain the difference between a stochastic and a deterministic environment, and its implication for agent design.
+✅ A: In a stochastic environment, the next state is not fully determined by the current state and action (e.g., dice roll). In a deterministic one, it is. Stochasticity requires agents to handle uncertainty, often via probability or utility functions.
+🎯 Difficulty: Hard
+🏷️ Tags: environments, agents, uncertainty
+
+
+📋 Card #4: Environment Properties
+❓ Q: Why is an episodic environment simpler for an agent than a sequential environment?
+✅ A: In an episodic environment, each episode is independent of previous ones, simplifying action choice as past actions don't affect future states. Sequential environments require agents to plan or learn long-term consequences.
+🎯 Difficulty: Medium
+🏷️ Tags: environments, agents, sequential
+
+
+🗓️ WEEK 2
+----------------------------------------
+
+📋 Card #5: Informed Search
+❓ Q: What are the two conditions for a heuristic function in A* search, and why are they important?
+✅ A: 1) Admissibility: Never overestimates the cost to the goal (h(n) ≤ h*(n)). 2) Consistency: Triangle inequality holds (h(n) ≤ cost(n,a,n') + h(n')). Admissibility ensures optimality; consistency simplifies implementation and also implies admissibility.
+🎯 Difficulty: Hard
+🏷️ Tags: A* search, heuristics, optimality
+
+
+📋 Card #6: Informed Search
+❓ Q: Outline the key components of the A* search algorithm's evaluation function f(n).
+✅ A: f(n) = g(n) + h(n), where g(n) is the actual cost from the start node to node n, and h(n) is the estimated cost from node n to the goal node (heuristic function).
+🎯 Difficulty: Medium
+🏷️ Tags: A* search, heuristics, algorithm
+
+
+📋 Card #7: Adversarial Search
+❓ Q: Describe the core principle of the Minimax algorithm in game theory.
+✅ A: Minimax is a recursive algorithm where the 'Max' player tries to maximize their score, assuming the 'Min' player will always choose actions to minimize the 'Max' player's score. It explores the game tree to find optimal moves.
+🎯 Difficulty: Medium
+🏷️ Tags: Minimax, game AI, adversarial search
+
+
+📋 Card #8: Adversarial Search
+❓ Q: How does Alpha-Beta Pruning optimize the Minimax algorithm?
+✅ A: Alpha-Beta Pruning prunes branches of the game tree that cannot possibly influence the final decision. It maintains alpha (best score for Max found so far) and beta (best score for Min found so far) values to cut off branches.
+🎯 Difficulty: Hard
+🏷️ Tags: Alpha-Beta, optimization, game AI
+
+
+🗓️ WEEK 3
+----------------------------------------
+
+📋 Card #9: Constraint Satisfaction Problems
+❓ Q: What are the three core components of a Constraint Satisfaction Problem (CSP)?
+✅ A: A CSP is defined by a set of Variables, each with a Domain of possible values, and a set of Constraints that specify allowed combinations of values for subsets of variables.
+🎯 Difficulty: Easy
+🏷️ Tags: CSPs, definitions, problem solving
+
+
+📋 Card #10: Constraint Satisfaction Problems
+❓ Q: Explain the concept of Arc Consistency (AC-3) in CSPs.
+✅ A: AC-3 is a constraint propagation algorithm that enforces arc consistency, ensuring that for every variable in a constraint, for every value in its domain, there exists at least one consistent value in the domain of the other variable(s) in the constraint.
+🎯 Difficulty: Hard
+🏷️ Tags: CSPs, AC-3, constraint propagation
+
+
+📋 Card #11: Logical Inference
+❓ Q: Differentiate between Forward Chaining and Backward Chaining inference methods.
+✅ A: Forward chaining starts with known facts and applies inference rules to deduce new conclusions until a goal is reached or no more facts can be derived. Backward chaining starts from the goal and works backward, finding rules that would prove the goal.
+🎯 Difficulty: Medium
+🏷️ Tags: logic, inference, reasoning
+
+
+📋 Card #12: First-Order Logic
+❓ Q: What is the role of unification in First-Order Logic (FOL) inference?
+✅ A: Unification is the process of finding substitutions that make two logical expressions (e.g., predicates, clauses) identical. It's crucial for applying inference rules like resolution and modus ponens in FOL.
+🎯 Difficulty: Hard
+🏷️ Tags: FOL, unification, inference
+
+
+🗓️ WEEK 4
+----------------------------------------
+
+📋 Card #13: Classical Planning
+❓ Q: Describe the STRIPS representation for planning problems.
+✅ A: STRIPS (STanford Research Institute Problem Solver) represents actions with preconditions (what must be true before an action) and effects (what becomes true/false after an action). States are typically represented as sets of propositions.
+🎯 Difficulty: Medium
+🏷️ Tags: planning, STRIPS, representation
+
+
+📋 Card #14: Classical Planning
+❓ Q: What is the key difference between state-space search and plan-space search in classical planning?
+✅ A: State-space search explores the space of possible world states to find a path from the initial to the goal state. Plan-space search (or partial-order planning) builds up a plan by adding actions and constraints, without committing to a specific order until necessary.
+🎯 Difficulty: Hard
+🏷️ Tags: planning, search, comparison
+
+
+📋 Card #15: Planning Graphs
+❓ Q: What is a Planning Graph (GraphPlan) and what is its primary use?
+✅ A: A Planning Graph is a layered graph structure composed of alternating proposition and action layers. It's used to quickly estimate whether a goal is reachable, find mutex relations, and derive effective heuristics for planning problems.
+🎯 Difficulty: Hard
+🏷️ Tags: planning, GraphPlan, heuristics
+
+
+📋 Card #16: Knowledge Representation
+❓ Q: What is the purpose of Ontological Engineering in AI?
+✅ A: Ontological Engineering involves constructing formal explicit specifications of a shared conceptualization. Its purpose is to create structured, machine-interpretable knowledge bases that facilitate reasoning, knowledge sharing, and interoperability across AI systems.
+🎯 Difficulty: Hard
+🏷️ Tags: knowledge representation, ontology, reasoning
+
+
+📊 STATISTICS
+==============================
+Total Cards: 16
+Weeks Covered: 4
+
+Difficulty Distribution:
+  Medium: 7
+  Hard: 8
+  Easy: 1

@@ -1,0 +1,172 @@
+# Advanced Hands-On Course: Fundamentals of Artificial Intelligence
+
+This 4-week advanced course on "Fundamentals of Artificial Intelligence" is designed for experienced learners who have a basic familiarity with AI concepts and programming. It aims to build a deeper understanding through structured applications, real-world cases, and hands-on implementation. The course emphasizes a project-based, hands-on approach, allowing students to "learn by doing" while also providing clear, structured explanations of complex concepts.
+
+**Target Audience:** Experienced learners, likely computer science or engineering students, or professionals looking to deepen their practical AI knowledge beyond theoretical fundamentals.
+
+---
+
+## Course Goals:
+
+Upon completion of this course, students will be able to:
+*   **Design and implement** advanced intelligent agents and evaluate their performance in complex environments.
+*   **Apply and optimize** sophisticated search algorithms, including those for adversarial environments, to solve complex computational problems.
+*   **Develop robust solutions** using constraint satisfaction techniques and logical inference systems for intelligent decision-making.
+*   **Construct and reason** with knowledge representation formalisms and implement classical planning systems for autonomous agents.
+
+---
+
+## Course Structure: 4 Weeks, 4 Modules
+
+### Module 1: Advanced Intelligent Agents and Environments
+*   **Duration:** Week 1
+*   **Learning Objectives:**
+    *   Critically analyze the architectures and capabilities of different intelligent agent types.
+    *   Design and implement a rational agent capable of operating effectively in a non-trivial environment.
+    *   Evaluate the performance of agents based on different environmental characteristics.
+*   **Key Concepts and Skills:**
+    *   Rational vs. Classical AI agents.
+    *   Agent architectures (e.g., simple reflex, model-based reflex, goal-based, utility-based).
+    *   Properties of environments (fully observable vs. partially observable, deterministic vs. stochastic, episodic vs. sequential, static vs. dynamic, discrete vs. continuous, single-agent vs. multi-agent).
+    *   Performance measures and formalizing agent-environment interaction.
+    *   State-space representation and simulation.
+*   **Instructional Activities/Methods (Clear & Structured, Project-Based):**
+    *   **Lectures & Discussions:** Review classical AI and rational agents, delving into the formal definitions of agent types and environmental properties, presenting agent frameworks and architectures.
+    *   **Code Walkthroughs:** Analyze existing, more complex agent implementations (e.g., a multi-agent simulation).
+    *   **Hands-on Project:** **Intelligent Agent Design & Simulation.** Students will choose a complex environment (e.g., a simulated robotic arm picking items, a resource gathering game, or a simplified factory automation scenario) and implement a utility-based or goal-based intelligent agent in Python that interacts with and optimizes its behavior within that environment. This will require careful consideration of state representation, perception, and action selection.
+*   **Integration of Curriculum-Based Materials:**
+    *   Refer to Unit 1: "History and Foundations of AI, Rational Intelligent Agents, Agents and Environments, Nature of Environments, Structure of Agents."
+    *   Utilize concepts from Russell & Norvig's "Artificial Intelligence: A Modern Approach" for formal agent definitions and environment characteristics.
+*   **Real-time Online Resources:**
+    *   AI Agent Tutorials with Python (e.g., LangChain, LangGraph for advanced agent frameworks if applicable, focusing on conceptual understanding for traditional AI agents).,,
+    *   OpenAI Gym (for environment simulation examples): For various simulated environments to test agent designs.
+    *   Reinforcement Learning environments (e.g., MiniGrid, PettingZoo) for understanding multi-agent interaction beyond basic single-agent setups.
+*   **Assessments, Exercises, or Projects:**
+    *   **Project 1: Advanced Agent Implementation:** Design document (detailing agent architecture, environment model, utility function/goals) and fully functional Python code for the simulated agent.
+    *   **Peer Code Review:** Students review and provide feedback on another team's agent implementation.
+
+### Module 2: Advanced Search Techniques and Adversarial Gaming AI
+*   **Duration:** Week 2
+*   **Learning Objectives:**
+    *   Implement and analyze informed and uninformed search algorithms for complex problems.
+    *   Design and apply effective heuristic functions to improve search efficiency.
+    *   Develop an AI player for a two-player adversarial game using Minimax with Alpha-Beta Pruning.
+    *   Evaluate the trade-offs between search depth, heuristic quality, and computational cost in game AI.
+*   **Key Concepts and Skills:**
+    *   Uninformed Search: BFS, DFS, Iterative Deepening Search.
+    *   Informed Search: Greedy Best-First Search, A\* Search, Heuristic functions (admissibility, consistency).,,,,
+    *   Adversarial Search: Game trees, Minimax algorithm.,,,,
+    *   Alpha-Beta Pruning for optimizing Minimax.,,,,
+*   **Instructional Activities/Methods (Clear & Structured, Project-Based):**
+    *   **Lectures & Derivations:** Deep dive into the mathematical foundations and optimality conditions of A\* search. Explain the game theory behind Minimax and the pruning logic of Alpha-Beta.
+    *   **Algorithm Trace & Analysis:** Trace complex search algorithms on challenging graphs and game trees, analyzing their time and space complexity.
+    *   **Hands-on Project:** **Game AI Development.** Implement an AI player for a chosen classic board game (e.g., Connect Four, Chess (simplified rules), or a custom game) using the Minimax algorithm with Alpha-Beta Pruning. Students will need to define game state, moves, and evaluation functions.
+*   **Integration of Curriculum-Based Materials:**
+    *   Refer to Unit 2: "Problem Solving by Search: Uninformed and Informed Search Strategies, Heuristic Functions; Adversarial Search: Games, Optimal Decisions in Games, Alpha-Beta Pruning."
+    *   Focus on the algorithms described in Russell & Norvig for implementation details.
+*   **Real-time Online Resources:**
+    *   GeeksforGeeks A\* Search Algorithm Implementation: For practical coding examples and explanations.,
+    *   Minimax with Alpha-Beta Pruning Tutorials (e.g., Medium articles, YouTube tutorials demonstrating Python implementations).,,
+    *   GitHub repositories with classic board game AI implementations for reference.
+*   **Assessments, Exercises, or Projects:**
+    *   **Project 2: Game AI Agent:** Fully functional Python code for a game AI, accompanied by a report analyzing its performance against a human or another AI, discussing heuristic design and pruning effectiveness.
+
+### Module 3: Constraint Satisfaction, Logic, and Inference Systems
+*   **Duration:** Week 3
+*   **Learning Objectives:**
+    *   Formulate real-world problems as Constraint Satisfaction Problems (CSPs).
+    *   Implement and compare various CSP solving algorithms, including backtracking and constraint propagation.
+    *   Construct and query knowledge bases using propositional and first-order logic.
+    *   Implement basic forward and backward chaining inference mechanisms.
+*   **Key Concepts and Skills:**
+    *   CSPs: Variables, domains, constraints.
+    *   CSP algorithms: Backtracking search, inference (e.g., Arc Consistency AC-3).,,,,
+    *   Local search for CSPs (Min-conflicts).
+    *   Knowledge-Based Agents.
+    *   Propositional Logic (Syntax, Semantics, Entailment).
+    *   First-Order Logic (Syntax, Semantics, Quantifiers).
+    *   Inference in FOL: Unification, Resolution Theorem Proving.
+    *   Forward Chaining and Backward Chaining.,,,,
+*   **Instructional Activities/Methods (Clear & Structured, Project-Based):**
+    *   **Lectures & Formalization:** Introduce CSPs and logical formalisms with rigorous definitions and examples. Explain the inner workings of backtracking, constraint propagation, resolution, and chaining.
+    *   **Problem-Solving Workshops:** Work through complex CSP examples and logical proofs.
+    *   **Hands-on Project:** **Logic and Constraint Solver.**
+        *   **Part A: CSP Solver:** Implement a generic backtracking CSP solver (or extend an existing one like `python-constraint`). Apply it to a non-trivial problem (e.g., Sudoku solver, N-Queens problem, or a complex scheduling problem with custom constraints).,,,,
+        *   **Part B: Inference Engine:** Build a simple rule-based inference engine in Python that supports either forward or backward chaining (or both) for a small knowledge base (e.g., an animal classification system, a basic medical diagnosis system).,,,,,,,,
+*   **Integration of Curriculum-Based Materials:**
+    *   Refer to Unit 3: "Constraint Satisfaction Problems, Inference in CSPs, Backtracking Search; Knowledge-Based Agents, Propositional and First-Order Logic, Resolution Theorem Proving, Unification Forward and Backward Chaining."
+    *   Utilize examples and formalisms from the recommended textbooks to guide implementation.
+*   **Real-time Online Resources:**
+    *   `python-constraint` module documentation: For advanced CSP implementation ideas.,,
+    *   Medium/GeeksforGeeks articles on implementing forward/backward chaining.,,,,
+    *   Discussions on Knowledge Representation and Reasoning (KRR) in AI communities.,,,,
+*   **Assessments, Exercises, or Projects:**
+    *   **Project 3: Integrated AI Solver:** Submit well-commented Python code for both the CSP solver and the inference engine. Include test cases demonstrating their capabilities and a report analyzing the efficiency and limitations of the implemented algorithms.
+
+### Module 4: Classical Planning and Knowledge Representation
+*   **Duration:** Week 4
+*   **Learning Objectives:**
+    *   Implement classical planning algorithms for various deterministic domains.
+    *   Understand and apply planning graph concepts.
+    *   Explore fundamental concepts of multi-agent planning and coordination.
+    *   Design and evaluate knowledge representation schemes using ontological engineering principles.
+*   **Key Concepts and Skills:**
+    *   Classical Planning: STRIPS representation, state-space search vs. plan-space search.
+    *   Planning Algorithms: Forward (Progression) search, Backward (Regression) search.
+    *   Planning Graphs (GraphPlan).,
+    *   Planning and acting in non-deterministic domains (brief introduction).
+    *   Multi-Agent Planning and coordination mechanisms.,,,,
+    *   Knowledge Representation: Ontological Engineering, Categories and Objects, Events.,,,,
+    *   Reasoning with Default Information.
+*   **Instructional Activities/Methods (Clear & Structured, Project-Based):**
+    *   **Lectures & Case Studies:** Introduce classical planning paradigms, multi-agent systems, and the significance of robust knowledge representation in complex AI systems. Discuss real-world planning problems (e.g., logistics, robotics).
+    *   **Conceptual Mapping:** Map real-world scenarios into formal planning domains (STRIPS).
+    *   **Hands-on Project:** **Planning and Ontology System.**
+        *   **Part A: Classical Planner:** Implement a basic classical planner (e.g., a forward search planner or a simplified GraphPlan implementation) for a specific domain (e.g., Blocksworld, a simplified navigation task).,,,,
+        *   **Part B: Ontology & Reasoning Demo:** Use an ontology editing tool (e.g., Protégé,,) to create a simple ontology for a specific domain (e.g., types of vehicles, scientific concepts). Demonstrate how basic reasoning can be performed over this ontology, perhaps by coding simple queries or using a reasoning library in Python.
+*   **Integration of Curriculum-Based Materials:**
+    *   Refer to Unit 4: "Classical Planning: Algorithms for Planning, Planning Graphs, Hierarchical Planning, Planning and Acting in Nondeterministic Domain, Multi-Agent Planning; Knowledge Representation: Ontological Engineering, Categories and Objects, Events, Reasoning with Default Information."
+    *   Leverage Russell & Norvig for planning algorithm details and concepts.
+*   **Real-time Online Resources:**
+    *   PDDL (Planning Domain Definition Language) examples and parsers.
+    *   Tutorials on implementing planning algorithms in Python.,,,,
+    *   Protégé Ontology Editor tutorials and OWL/RDF basics.,,,,
+    *   Articles and research papers on multi-agent planning frameworks and coordination.,,,,
+*   **Assessments, Exercises, or Projects:**
+    *   **Project 4: AI Planner & KR System:** Submit Python code for the classical planner with demonstration of its capabilities. Present the designed ontology and a small Python script or demonstration showing how to query and infer knowledge from it. A final report synthesizing the learnings from the two parts.
+
+---
+
+## Final Assessment:
+
+*   **Cumulative Project Presentation (Optional but Recommended for Advanced Level):** Students could present their individual or team projects from across the modules, demonstrating their understanding and implementation skills. This could involve a live demo, a technical report, and a short presentation. The presentation should highlight the design choices, challenges encountered, and solutions implemented, reflecting the advanced, hands-on nature of the course.
+
+---
+
+## System Prompt for a Teaching Agent:
+
+You are an **Advanced AI Fundamentals Teaching Agent**. Your role is to support learners enrolled in a 4-week, project-based/hands-on course on "Fundamentals of Artificial Intelligence" at an **advanced difficulty level**.
+
+**Your Core Responsibilities:**
+
+1.  **Guided Exploration & Project Support:** Act as a guide for students as they work through complex implementation projects. Encourage them to explore advanced concepts and debugging strategies independently, providing hints and frameworks rather than direct solutions.
+2.  **Conceptual Clarification (Layered Complexity):** Explain core AI concepts step-by-step, building complexity progressively. For advanced learners, immediately connect theoretical concepts to their practical implications, algorithmic details, and potential optimizations. Use real-world examples and analogies appropriate for those with foundational knowledge.
+3.  **Resource Curation & Expansion:** Provide supplemental readings, research papers, and advanced online resources (e.g., specific library documentation, open-source projects, academic papers) that go beyond the basics. Be prepared to suggest alternative approaches or cutting-edge developments relevant to the module topics.
+4.  **Hands-On & Implementation Focus:** Prioritize discussions around code, algorithms, and project implementation. Help students troubleshoot their code, understand performance bottlenecks, and refine their project designs.
+5.  **Assessment Preparation:** Assist students in preparing for module projects and reports by clarifying expectations, offering conceptual guidance for design, and suggesting strategies for performance analysis and evaluation.
+
+**Communication Style:**
+
+*   **Structured & Clear:** Always provide explanations in a logical, step-by-step manner. Use clear headings, bullet points, and code snippets when appropriate.
+*   **Project-Oriented:** Frame your guidance around the practical challenges and goals of the course projects.
+*   **Challenging & Encouraging:** Push learners to think critically and solve problems independently, but offer support and encouragement when they face difficulties.
+*   **Assume Prior Knowledge (Advanced):** Do not start with absolute basics unless explicitly asked. Dive directly into the complexities and nuances of advanced AI topics.
+*   **Reference Course Content:** Always ground your answers in the provided course outline (modules, concepts, and objectives) and the original syllabus where relevant.
+
+**Specific Instructions for Interaction:**
+
+*   When a student asks for help on a module project, first inquire about their current approach and specific challenge.
+*   If a student asks "What is X?", explain X concisely, then immediately provide an example of how X is applied or implemented in an advanced AI system or project from the course context.
+*   If a student asks for resources, provide specific URLs and a brief explanation of why that resource is valuable for an advanced learner.
+*   Encourage reflection: After a student asks a question, you might ask a follow-up question to probe their understanding or encourage further exploration.
+*   Be ready to discuss the trade-offs, limitations, and advanced considerations of each algorithm and technique.
