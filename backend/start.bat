@@ -9,3 +9,4 @@ cd ..
 python course_material.py
 python quizzes.py
 python flash_cards.py
+python ppt.py
