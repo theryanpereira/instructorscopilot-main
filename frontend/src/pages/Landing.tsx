@@ -55,10 +55,13 @@ const Landing = () => {
             <Button variant="ghost" onClick={() => navigate("/login")}>
               Sign In
             </Button>
+            {/* Commented out "Get Started" button as per user request */}
+            {/*
             <Button onClick={handleGetStarted}>
               Get Started
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
+            */}
           </div>
         </div>
       </header>
@@ -82,18 +85,14 @@ const Landing = () => {
             </p>
             
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <div className="flex w-full max-w-sm items-center space-x-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <Button onClick={handleGetStarted}>
-                  Start Free
-                </Button>
-              </div>
+              {/* Replaced email input and Start Free button with a single Sign-In button */}
+              <Button 
+                onClick={() => navigate("/login")}
+                className="w-full max-w-sm bg-blue-600 hover:bg-blue-700 text-white"
+                size="lg"
+              >
+                Sign-In to get started.
+              </Button>
             </div>
             
             <p className="mt-4 text-sm text-muted-foreground">
@@ -186,7 +185,7 @@ const Landing = () => {
             <Button 
               size="lg" 
               variant="secondary"
-              onClick={handleGetStarted}
+              onClick={() => navigate("/login")} // Changed redirection to /login
               className="bg-background text-foreground hover:bg-background/90"
             >
               Start Creating for Free
