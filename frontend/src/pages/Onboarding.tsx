@@ -83,7 +83,8 @@ const Onboarding = () => {
     }
   };
 
-  const totalSteps = 2;
+  const totalSteps = 1; // Changed from 2 to 1 to make it a single-step onboarding followed by redirection
+
   const progress = (currentStep / totalSteps) * 100;
 
   const goals = [
@@ -115,6 +116,9 @@ const Onboarding = () => {
     // If currently on Step 1, save the full name to the backend
     if (currentStep === 1) {
       await saveUserNameToBackend(formData.fullName);
+      // After saving user name, redirect directly to the create page
+      navigate("/create"); // Redirect to the create page after step 1
+      return; // Exit the function after navigation
     }
 
     if (currentStep < totalSteps) {
@@ -188,31 +192,32 @@ const Onboarding = () => {
           </Card>
         );
 
-      case 2:
+      case 2: // Commenting out Step 2 of 2
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-primary" />
-                Set Up Student Intake (optional)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-               <p className="text-muted-foreground">
-                Upload a .csv file with student information to personalize content for each student.
-              </p>
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Drag and drop a .csv file here, or click to upload
-                </p>
-                <Button variant="outline" onClick={() => document.getElementById('onboarding-csv-upload')?.click()}>
-                  Upload CSV
-                </Button>
-                <Input id="onboarding-csv-upload" type="file" accept=".csv" className="hidden" onChange={e => handleFileChange(e, ['.csv'], 'CSV')} />
-              </div>
-            </CardContent>
-          </Card>
+          // <Card>
+          //   <CardHeader>
+          //     <CardTitle className="flex items-center gap-2">
+          //       <Users className="h-6 w-6 text-primary" />
+          //       Set Up Student Intake (optional)
+          //     </CardTitle>
+          //   </CardHeader>
+          //   <CardContent className="space-y-4">
+          //      <p className="text-muted-foreground">
+          //       Upload a .csv file with student information to personalize content for each student.
+          //     </p>
+          //     <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+          //       <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          //       <p className="text-sm text-muted-foreground mb-2">
+          //         Drag and drop a .csv file here, or click to upload
+          //       </p>
+          //       <Button variant="outline" onClick={() => document.getElementById('onboarding-csv-upload')?.click()}>
+          //         Upload CSV
+          //       </Button>
+          //       <Input id="onboarding-csv-upload" type="file" accept=".csv" className="hidden" onChange={e => handleFileChange(e, ['.csv'], 'CSV')} />
+          //     </div>
+          //   </CardContent>
+          // </Card>
+          null // Render nothing for case 2, effectively hiding it
         );
 
       default:
