@@ -31,10 +31,20 @@ const Login = () => {
         title: "Welcome back!",
         description: "You've been successfully logged in.",
       });
-      await saveUserIdToBackend(formData.email);
-      // TEST CODE: Save user_id to localStorage for subsequent pages
-      localStorage.setItem('user_id', formData.email);
-      navigate("/onboarding");
+      const success = await saveUserIdToBackend(formData.email);
+      if (success) {
+        // TEST CODE: Save user_id to localStorage for subsequent pages
+        localStorage.setItem('user_id', formData.email);
+        console.log("DEBUG: Attempting to navigate to /onboarding");
+        navigate("/onboarding");
+      } else {
+        console.error("Login failed: saveUserIdToBackend did not succeed.");
+        toast({
+          title: "Login Failed",
+          description: "Could not connect to backend. Please try again.",
+          variant: "destructive",
+        });
+      }
     } else {
       // Sign up logic
       if (formData.password !== formData.confirmPassword) {
@@ -49,10 +59,20 @@ const Login = () => {
         title: "Account created!",
         description: "Welcome to Masterplan. Let's get you started.",
       });
-      await saveUserIdToBackend(formData.email);
-      // TEST CODE: Save user_id to localStorage for subsequent pages
-      localStorage.setItem('user_id', formData.email);
-      navigate("/onboarding");
+      const success = await saveUserIdToBackend(formData.email);
+      if (success) {
+        // TEST CODE: Save user_id to localStorage for subsequent pages
+        localStorage.setItem('user_id', formData.email);
+        console.log("DEBUG: Attempting to navigate to /onboarding");
+        navigate("/onboarding");
+      } else {
+        console.error("Signup failed: saveUserIdToBackend did not succeed.");
+        toast({
+          title: "Signup Failed",
+          description: "Could not connect to backend. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -264,14 +284,10 @@ const Login = () => {
   );
 };
 
-const saveUserIdToBackend = async (email: string) => {
+const saveUserIdToBackend = async (email: string): Promise<boolean> => {
   try {
     const payload = {
       user_id: email,
-      // user_name: email.split('@')[0], // Removed as per new flow
-      // difficulty_level: "Foundational", // Removed as per new flow
-      // duration: "4 weeks", // Removed as per new flow
-      // teaching_style: "Exploratory & Guided", // Removed as per new flow
     };
 
     // TEST CODE: Log payload before sending
@@ -292,11 +308,13 @@ const saveUserIdToBackend = async (email: string) => {
       console.log("User ID saved to backend successfully.");
       // TEST CODE: Log successful response
       console.log("TEST CODE: /save-user-config success response:", await response.json());
+      return true;
     } else {
       const errorData = await response.json();
       console.error("Failed to save user ID to backend.", errorData);
       // TEST CODE: Log error response
       console.error("TEST CODE: /save-user-config error response:", errorData);
+      return false;
     }
   } catch (error) {
     // TEST CODE: Log error in catch block
@@ -304,6 +322,7 @@ const saveUserIdToBackend = async (email: string) => {
     console.error("Error sending user ID to backend:", error);
     // TEST CODE: Log catch error
     console.error("TEST CODE: Error in saveUserIdToBackend catch block:", error);
+    return false;
   }
 };
 
