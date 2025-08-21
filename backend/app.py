@@ -6,6 +6,7 @@ import json
 import shutil
 import subprocess
 import asyncio
+import platform
 from pathlib import Path
 from typing import Optional
 import logging
@@ -104,8 +105,7 @@ async def upload_curriculum(
 @app.post("/generate-content/")
 async def generate_content():
     """
-    Run the backend processing pipeline to generate course content
-    Following the exact sequence from start.sh script
+    Run the shell script directly to generate course content
     """
     try:
         # Check if user config exists
@@ -118,112 +118,80 @@ async def generate_content():
         if not pdf_file_path.exists():
             raise HTTPException(status_code=400, detail="No curriculum PDF found. Please upload curriculum first.")
         
-        logger.info("Starting AI Copilot for Instructors...")
+        # Check if start.sh or start.bat exists based on platform
+        if platform.system() == "Windows":
+            script_to_run = Path("start.bat")
+            script_type = "batch"
+        else:  # Linux/Unix (Render)
+            script_to_run = Path("start.sh")
+            script_type = "shell"
         
-        # Run the backend processing pipeline following start.sh exactly
+        if not script_to_run.exists():
+            raise HTTPException(
+                status_code=400, 
+                detail=f"{script_to_run.name} script not found in backend directory. Platform: {platform.system()}"
+            )
+        
+        logger.info(f"Starting AI Copilot for Instructors using {script_to_run} script...")
+        
+        # Execute the script directly
         try:
-            # Step 1: python llm.py
-            logger.info("Running: python llm.py")
-            result = subprocess.run(["python", "llm.py"], 
-                                  cwd=Path.cwd(), 
-                                  capture_output=True, 
-                                  text=True,
-                                  encoding='utf-8',
-                                  errors='replace',
-                                  timeout=300)
+            logger.info(f"Executing {script_type} script: {script_to_run}")
             
-            if result.returncode != 0:
-                logger.error(f"llm.py failed: {result.stderr}")
-                return JSONResponse(status_code=500, content={"error": f"Master instruction generation failed: {result.stderr}"})
+            if script_type == "batch":
+                # On Windows, run the batch file directly with proper sequential execution
+                result = subprocess.run(
+                    [str(script_to_run)],
+                    cwd=Path.cwd(),
+                    text=True,
+                    encoding='utf-8',
+                    errors='replace',
+                    shell=True,  # Use shell for batch files
+                    # NO TIMEOUT - let each command complete fully
+                    # NO capture_output - let it run in real-time
+                )
+            else:
+                # For shell scripts, try different bash options
+                bash_found = False
+                
+                # Try Git Bash first
+                for bash_cmd in ["bash", "C:\\Program Files\\Git\\bin\\bash.exe", "C:\\Git\\bin\\bash.exe"]:
+                    try:
+                        result = subprocess.run(
+                            [bash_cmd, str(script_to_run)],
+                            cwd=Path.cwd(),
+                            capture_output=True,
+                            text=True,
+                            encoding='utf-8',
+                            errors='replace',
+                            timeout=1800
+                        )
+                        bash_found = True
+                        break
+                    except FileNotFoundError:
+                        continue
+                
+                if not bash_found:
+                    # Try WSL as last resort
+                    try:
+                        result = subprocess.run(
+                            ["wsl", "bash", str(script_to_run)],
+                            cwd=Path.cwd(),
+                            capture_output=True,
+                            text=True,
+                            encoding='utf-8',
+                            errors='replace',
+                            timeout=1800
+                        )
+                    except FileNotFoundError:
+                        raise HTTPException(
+                            status_code=500, 
+                            detail="No bash environment found. Please use start.bat instead of start.sh on Windows, or install Git Bash/WSL."
+                        )
             
-            logger.info("Master instructions generated.")
+            logger.info(f"Script execution completed with return code: {result.returncode}")
             
-            # Step 2: Starting agents - cd copilot
-            logger.info("Starting agents")
-            copilot_dir = Path("copilot")
-            
-            # Step 3: python main.py (in copilot directory)
-            logger.info("Running: python main.py")
-            result = subprocess.run(["python", "main.py"], 
-                                  cwd=copilot_dir, 
-                                  capture_output=True, 
-                                  text=True,
-                                  encoding='utf-8',
-                                  errors='replace',
-                                  timeout=300)
-            
-            if result.returncode != 0:
-                logger.warning(f"main.py had issues: {result.stderr}")
-            
-            # Step 4: python deep_main.py (in copilot directory)
-            logger.info("Running: python deep_main.py")
-            result = subprocess.run(["python", "deep_main.py"], 
-                                  cwd=copilot_dir, 
-                                  capture_output=True, 
-                                  text=True,
-                                  encoding='utf-8',
-                                  errors='replace',
-                                  timeout=300)
-            
-            if result.returncode != 0:
-                logger.warning(f"deep_main.py had issues: {result.stderr}")
-            
-            # Step 5: cd .. (back to main directory) - python course_material.py
-            logger.info("Running: python course_material.py")
-            result = subprocess.run(["python", "course_material.py"], 
-                                  cwd=Path.cwd(), 
-                                  capture_output=True, 
-                                  text=True,
-                                  encoding='utf-8',
-                                  errors='replace',
-                                  timeout=600)
-            
-            if result.returncode != 0:
-                logger.warning(f"course_material.py had issues: {result.stderr}")
-            
-            # Step 6: python quizzes.py
-            logger.info("Running: python quizzes.py")
-            result = subprocess.run(["python", "quizzes.py"], 
-                                  cwd=Path.cwd(), 
-                                  capture_output=True, 
-                                  text=True,
-                                  encoding='utf-8',
-                                  errors='replace',
-                                  timeout=600)
-            
-            if result.returncode != 0:
-                logger.warning(f"quizzes.py had issues: {result.stderr}")
-            
-            # Step 7: python flash_cards.py
-            logger.info("Running: python flash_cards.py")
-            result = subprocess.run(["python", "flash_cards.py"], 
-                                  cwd=Path.cwd(), 
-                                  capture_output=True, 
-                                  text=True,
-                                  encoding='utf-8',
-                                  errors='replace',
-                                  timeout=600)
-            
-            if result.returncode != 0:
-                logger.warning(f"flash_cards.py had issues: {result.stderr}")
-            
-            # Step 8: python ppt.py
-            logger.info("Running: python ppt.py")
-            result = subprocess.run(["python", "ppt.py"], 
-                                  cwd=Path.cwd(), 
-                                  capture_output=True, 
-                                  text=True,
-                                  encoding='utf-8',
-                                  errors='replace',
-                                  timeout=600)
-            
-            if result.returncode != 0:
-                logger.warning(f"ppt.py had issues: {result.stderr}")
-            
-            # Step 9: cd .. (final step - already in root directory)
-            logger.info("AI Copilot for Instructors processing completed!")
-            
-            # Check for generated content
+            # Check for generated content (regardless of return code, some scripts may have warnings but still generate files)
             generated_files = []
             output_dir = UPLOAD_DIR
             
@@ -236,23 +204,35 @@ async def generate_content():
                             "size": file_path.stat().st_size
                         })
             
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "message": "AI Copilot for Instructors completed successfully",
-                    "generated_files": generated_files,
-                    "total_files": len(generated_files),
-                    "process_completed": True
-                }
-            )
+            # Consider success if return code is 0 OR files were generated
+            success = result.returncode == 0 or len(generated_files) > 0
             
-        except subprocess.TimeoutExpired:
-            logger.error("Backend processing timed out")
-            raise HTTPException(status_code=500, detail="Content generation timed out")
-        
+            if success:
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "message": "Script execution completed successfully!",
+                        "generated_files": generated_files,
+                        "total_files": len(generated_files),
+                        "process_completed": True,
+                        "return_code": result.returncode
+                    }
+                )
+            else:
+                return JSONResponse(
+                    status_code=500,
+                    content={
+                        "message": f"Script execution failed (return code: {result.returncode})",
+                        "generated_files": generated_files,
+                        "total_files": len(generated_files),
+                        "process_completed": False,
+                        "return_code": result.returncode
+                    }
+                )
+            
         except Exception as e:
-            logger.error(f"Backend processing error: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
+            logger.error(f"Script execution error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Script execution failed: {str(e)}")
         
     except Exception as e:
         logger.error(f"Error in generate_content: {str(e)}")

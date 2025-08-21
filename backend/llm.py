@@ -161,8 +161,12 @@ def generate_course_content(client, teaching_style, duration, difficulty_level, 
     Returns:
         Generated response from the LLM
     """
-    # Build contents list - start with basic inputs
-    contents = [teaching_style, duration, difficulty_level]
+    # Build contents list properly - all content should be strings
+    contents = [
+        f"Teaching Style: {teaching_style}",
+        f"Duration: {duration}",
+        f"Difficulty Level: {difficulty_level}"
+    ]
     
     # Add course content if provided (for quiz generation, analysis, etc.)
     if course_content:
