@@ -5,14 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Footer } from "@/components/layout/Footer";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const location = useLocation();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -20,44 +23,41 @@ const Login = () => {
     name: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const from = location.state?.from?.pathname || "/dashboard";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    // Mock authentication - in real app, this would call your auth service
-    if (isLogin) {
-      // Login logic
-      toast({
-        title: "Welcome back!",
-        description: "You've been successfully logged in.",
-      });
-      navigate("/onboarding");
-    } else {
-      // Sign up logic
-      if (formData.password !== formData.confirmPassword) {
-        toast({
-          title: "Password mismatch",
-          description: "Please make sure your passwords match.",
-          variant: "destructive"
-        });
-        return;
+    try {
+      if (isLogin) {
+        // Login logic
+        const { error } = await signIn(formData.email, formData.password);
+        if (!error) {
+          navigate(from, { replace: true });
+        }
+      } else {
+        // Sign up logic
+        if (formData.password !== formData.confirmPassword) {
+          return;
+        }
+        const { error } = await signUp(formData.email, formData.password, formData.name);
+        if (!error) {
+          navigate("/onboarding");
+        }
       }
-      toast({
-        title: "Account created!",
-        description: "Welcome to Masterplan. Let's get you started.",
-      });
-      navigate("/onboarding");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleGoogleAuth = () => {
-    // Mock Google auth - in real app, this would integrate with Google OAuth
-    toast({
-      title: "Google Sign In",
-      description: "Redirecting to Google...",
-    });
-    setTimeout(() => {
-      navigate("/onboarding");
-    }, 1000);
+  const handleGoogleAuth = async () => {
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -97,11 +97,12 @@ const Login = () => {
           </CardHeader>
           
           <CardContent className="space-y-4">
-            {/* Google Sign In */}
-            <Button 
-              variant="outline" 
-              className="w-full" 
+            {/* Google Sign In Button */}
+            <Button
+              variant="outline"
+              className="w-full"
               onClick={handleGoogleAuth}
+              disabled={loading}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -121,7 +122,7 @@ const Login = () => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continue with Google
+              {loading ? "Signing in..." : "Continue with Google"}
             </Button>
             
             <div className="relative">
@@ -221,8 +222,11 @@ const Login = () => {
                 </div>
               )}
 
-              <Button type="submit" className="w-full">
-                {isLogin ? "Sign In" : "Create Account"}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading 
+                  ? "Processing..." 
+                  : (isLogin ? "Sign In" : "Create Account")
+                }
               </Button>
             </form>
 
@@ -241,6 +245,7 @@ const Login = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };

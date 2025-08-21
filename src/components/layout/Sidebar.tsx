@@ -56,22 +56,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </Button>
         </div>
 
-        {/* Quick Create Button */}
-        <div className="px-3 pb-4">
-          <NavLink to="/create">
-            <Button 
-              variant="ai" 
-              className={cn(
-                "w-full justify-start shadow-elegant hover:shadow-glow transition-smooth",
-                collapsed ? "px-2" : "gap-2"
-              )}
-            >
-              <Plus className="h-4 w-4" />
-              {!collapsed && <span>Create Course</span>}
-            </Button>
-          </NavLink>
-        </div>
-
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3">
           {navigation.map((item) => {
@@ -88,7 +72,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   collapsed && "justify-center px-2"
                 )}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon className="h-5 w-5 flex-shrink-0 text-foreground" />
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{item.name}</div>

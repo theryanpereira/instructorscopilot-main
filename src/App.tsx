@@ -17,6 +17,8 @@ import Terms from "./pages/Terms";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 import { Layout } from "@/components/layout/Layout";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -32,23 +34,33 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route element={<Layout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/create" element={<Create />} />
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/students" element={<Students />} />
-              <Route path="/settings" element={<Settings />} />
-            </Route>
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/support" element={<Support />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="/onboarding" element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              } />
+              <Route element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/create" element={<Create />} />
+                <Route path="/courses" element={<Courses />} />
+                <Route path="/students" element={<Students />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

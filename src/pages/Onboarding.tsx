@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Upload, FileText, BookOpen, CheckCircle, Play } from "lucide-react";
+import { ArrowRight, Upload, FileText, BookOpen, CheckCircle, Play, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/layout/Footer";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -15,21 +16,81 @@ const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     teachingSubject: "",
+    fullName: "", // New field for full name
     experience: "",
     toneSample: "",
     goals: []
   });
 
-  const totalSteps = 4;
+  // Async function to save user name to the backend
+  const saveUserNameToBackend = async (fullName: string) => {
+    // Retrieve user_id from localStorage
+    const user_id = localStorage.getItem('user_id');
+    if (!user_id) {
+      console.error("Error: user_id not found in localStorage. Cannot save user name.");
+      toast({
+        title: "Error",
+        description: "User session not found. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const payload = {
+        user_id: user_id,
+        user_name: fullName,
+      };
+
+      // TEST CODE: Log payload before sending
+      console.log("TEST CODE: Sending payload to /save-user-name:", payload);
+
+      const response = await fetch('/save-user-name', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        console.log("User name saved to backend successfully.");
+        // TEST CODE: Log successful response
+        console.log("TEST CODE: /save-user-name success response:", await response.json());
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to save user name to backend.", errorData);
+        // TEST CODE: Log error response
+        console.error("TEST CODE: /save-user-name error response:", errorData);
+      }
+    } catch (error) {
+      console.error("Error sending user name to backend:", error);
+      // TEST CODE: Log catch error
+      console.error("TEST CODE: Error in saveUserNameToBackend catch block:", error);
+    }
+  };
+
+  // File validation handler
+  const handleFileChange = (e, allowedTypes, label) => {
+    const file = e.target.files?.[0];
+    if (file && !allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) {
+      toast({
+        title: 'Invalid file type',
+        description: `Please upload a valid ${label} file (${allowedTypes.join(', ')})`,
+        variant: 'destructive',
+      });
+      e.target.value = '';
+    }
+  };
+
+  const totalSteps = 2;
   const progress = (currentStep / totalSteps) * 100;
 
   const goals = [
     { id: "speed", label: "Speed up content creation", icon: "⚡" },
     { id: "personalize", label: "Personalize learning paths", icon: "🎯" },
     { id: "tone", label: "Maintain my teaching voice", icon: "🎨" },
-    { id: "export", label: "Export to Google Docs/LMS", icon: "📤" },
-    { id: "quizzes", label: "Generate quizzes & assessments", icon: "📝" },
-    { id: "current", label: "Keep content current", icon: "🔄" }
+    { id: "quizzes", label: "Generate quizzes & assessments", icon: "📝" }
   ];
 
   const handleGoalToggle = (goalId: string) => {
@@ -41,7 +102,21 @@ const Onboarding = () => {
     }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => { // Made handleNext async
+    if (formData.fullName.trim() === "" || formData.experience.trim() === "") {
+      toast({
+        title: "Missing Information",
+        description: "Please enter input in mandatory fields marked with a *",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If currently on Step 1, save the full name to the backend
+    if (currentStep === 1) {
+      await saveUserNameToBackend(formData.fullName);
+    }
+
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -70,13 +145,22 @@ const Onboarding = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-6 w-6 text-primary" />
-                Tell us about your teaching
+                Tell us about yourself
               </CardTitle>
               <CardDescription>
                 Help us understand your teaching background so we can personalize your experience.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Please enter your full name <span className="text-red-500">*</span></Label>
+                <Input
+                  id="fullName"
+                  placeholder="e.g., John Doe"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="subject">What subject do you teach?</Label>
                 <Input
@@ -87,7 +171,7 @@ const Onboarding = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="experience">Teaching experience</Label>
+                <Label htmlFor="experience">Teaching experience <span className="text-red-500">*</span></Label>
                 <select 
                   id="experience"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
@@ -95,9 +179,9 @@ const Onboarding = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, experience: e.target.value }))}
                 >
                   <option value="">Select your experience level</option>
-                  <option value="beginner">New to teaching (0-1 years)</option>
-                  <option value="intermediate">Some experience (2-5 years)</option>
-                  <option value="experienced">Very experienced (5+ years)</option>
+                  <option value="beginner">Beginner  (0 - 3 yrs)</option>
+                  <option value="intermediate">Intermediate  (4 - 9 yrs)</option>
+                  <option value="advanced">Advanced (10+ yrs)</option>
                 </select>
               </div>
             </CardContent>
@@ -109,127 +193,23 @@ const Onboarding = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-6 w-6 text-primary" />
-                Share your teaching style
+                <Users className="h-6 w-6 text-primary" />
+                Set Up Student Intake (optional)
               </CardTitle>
-              <CardDescription>
-                Upload a sample of your past content or describe your teaching style so our AI can match your voice.
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Upload a sample lesson or content (optional)</Label>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                  <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Drag and drop files here, or click to browse
-                  </p>
-                  <Button variant="outline" size="sm">
-                    Choose Files
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    PDF, DOC, TXT files accepted
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="toneSample">Or describe your teaching style</Label>
-                <Textarea
-                  id="toneSample"
-                  placeholder="e.g., I use lots of real-world examples, keep things conversational, and break down complex topics into simple steps..."
-                  rows={4}
-                  value={formData.toneSample}
-                  onChange={(e) => setFormData(prev => ({ ...prev, toneSample: e.target.value }))}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        );
-
-      case 3:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-6 w-6 text-primary" />
-                What are your goals?
-              </CardTitle>
-              <CardDescription>
-                Select what you want to achieve with Masterplan. You can change these anytime.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 md:grid-cols-2">
-                {goals.map((goal) => (
-                  <div
-                    key={goal.id}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      formData.goals.includes(goal.id)
-                        ? "border-primary bg-primary/5"
-                        : "border-muted hover:border-primary/50"
-                    }`}
-                    onClick={() => handleGoalToggle(goal.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{goal.icon}</span>
-                      <span className="font-medium">{goal.label}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        );
-
-      case 4:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Play className="h-6 w-6 text-primary" />
-                You're all set!
-              </CardTitle>
-              <CardDescription>
-                Your Masterplan account is ready. Here's what you can do next:
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4">
-                <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-primary">1</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Create your first course</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Use the Course Creator to generate lesson plans and content
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-primary">2</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Set up student intake</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Create forms to personalize content for each student
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-semibold text-primary">3</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Export to Google Docs</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Push your content directly to your favorite tools
-                    </p>
-                  </div>
-                </div>
+               <p className="text-muted-foreground">
+                Upload a .csv file with student information to personalize content for each student.
+              </p>
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  Drag and drop a .csv file here, or click to upload
+                </p>
+                <Button variant="outline" onClick={() => document.getElementById('onboarding-csv-upload')?.click()}>
+                  Upload CSV
+                </Button>
+                <Input id="onboarding-csv-upload" type="file" accept=".csv" className="hidden" onChange={e => handleFileChange(e, ['.csv'], 'CSV')} />
               </div>
             </CardContent>
           </Card>
@@ -292,6 +272,7 @@ const Onboarding = () => {
           </Button>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -71,7 +71,7 @@ export function UserGuide() {
         className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-50"
         onClick={() => setIsOpen(true)}
       >
-        <HelpCircle className="h-5 w-5" />
+        <HelpCircle className="h-5 w-5 text-foreground" />
       </Button>
     );
   }
@@ -82,7 +82,7 @@ export function UserGuide() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Play className="h-5 w-5 text-primary" />
+              <Play className="h-5 w-5 text-foreground" />
               Navigation Guide
             </CardTitle>
             <CardDescription>
@@ -94,7 +94,7 @@ export function UserGuide() {
             size="icon"
             onClick={() => setIsOpen(false)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 text-foreground" />
           </Button>
         </CardHeader>
         
@@ -105,7 +105,7 @@ export function UserGuide() {
             <div className="space-y-3">
               {navigationSteps.map((step, index) => (
                 <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
-                  <step.icon className={`h-5 w-5 mt-0.5 ${step.color}`} />
+                  <step.icon className="h-5 w-5 mt-0.5 text-foreground" />
                   <div className="flex-1">
                     <div className="font-medium">{step.title}</div>
                     <div className="text-sm text-muted-foreground">{step.description}</div>
@@ -127,7 +127,7 @@ export function UserGuide() {
                   </div>
                   <span className="text-sm">{step}</span>
                   {index < workflow.length - 1 && (
-                    <ArrowRight className="h-3 w-3 text-muted-foreground ml-auto" />
+                    <ArrowRight className="h-3 w-3 text-foreground ml-auto" />
                   )}
                 </div>
               ))}

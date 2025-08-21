@@ -21,30 +21,6 @@ const actions = [
     variant: "default" as const,
     action: "upload-tone",
   },
-  {
-    title: "Student Intake",
-    shortTitle: "Students",
-    description: "Create personalized learning forms",
-    icon: Users,
-    variant: "default" as const,
-    action: "student-intake",
-  },
-  {
-    title: "Content Library",
-    shortTitle: "Library",
-    description: "Browse your existing materials",
-    icon: FileText,
-    variant: "default" as const,
-    action: "library",
-  },
-  {
-    title: "Export to Google",
-    shortTitle: "Export",
-    description: "Send content to Google Docs",
-    icon: Download,
-    variant: "default" as const,
-    action: "export-google",
-  },
 ];
 
 export function QuickActions() {
@@ -77,7 +53,7 @@ export function QuickActions() {
     <Card className="bg-gradient-card shadow-elegant">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
+          <Zap className="h-5 w-5 text-foreground" />
           Quick Actions
         </CardTitle>
         <CardDescription>
@@ -87,7 +63,7 @@ export function QuickActions() {
       <CardContent>
         <TooltipProvider>
           <div
-            className="flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-5 sm:gap-3 sm:overflow-visible"
+            className="flex gap-2 justify-center sm:justify-start overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {actions.map((action) => (
@@ -99,7 +75,7 @@ export function QuickActions() {
                       className="flex flex-col items-center justify-center gap-1 px-2 py-4 w-full h-auto min-h-[72px] sm:min-h-[80px] text-xs font-medium"
                       onClick={() => handleAction(action.action)}
                     >
-                      <action.icon className="h-6 w-6 mb-1" />
+                      <action.icon className="h-6 w-6 mb-1 text-foreground" />
                       <span className="truncate text-center w-full">{action.shortTitle}</span>
                     </Button>
                   </TooltipTrigger>
