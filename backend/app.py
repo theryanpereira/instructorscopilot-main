@@ -152,6 +152,10 @@ async def generate_content():
             'DISABLE_SERVICES': '1',
             'PYTHONUNBUFFERED': '1'
         })
+        # Ensure child processes do not inherit the web service PORT
+        if 'PORT' in env:
+            logger.info("Removing PORT from child environment to avoid port conflicts during generation")
+            env.pop('PORT', None)
         
         # Check for required environment variables
         if not env.get('GEMINI_API_KEY') and not env.get('GOOGLE_API_KEY'):
@@ -174,11 +178,10 @@ async def generate_content():
                     timeout=3600  # 1 hour timeout
                 )
             else:
-                # For shell scripts on Linux/Render - use bash directly
+                # For shell scripts on Linux/Render - use bash directly. Do not capture output to avoid large-memory buffers.
                 result = subprocess.run(
                     ["bash", str(script_to_run)],
                     cwd=backend_dir,
-                    capture_output=True,
                     text=True,
                     encoding='utf-8',
                     errors='replace',
@@ -188,11 +191,7 @@ async def generate_content():
             
             logger.info(f"Script execution completed with return code: {result.returncode}")
             
-            # Log script output for debugging
-            if result.stdout:
-                logger.info(f"Script stdout: {result.stdout}")
-            if result.stderr:
-                logger.error(f"Script stderr: {result.stderr}")
+            # Output already streamed to logs; avoid logging full buffers here
             
             # Check for generated content (regardless of return code, some scripts may have warnings but still generate files)
             generated_files = []

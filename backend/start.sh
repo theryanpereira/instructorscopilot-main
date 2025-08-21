@@ -4,6 +4,9 @@
 export NO_SERVER=1
 export DISABLE_SERVICES=1
 export PYTHONUNBUFFERED=1
+# Ensure no child process tries to bind to Render's web service PORT
+unset PORT 2>/dev/null || true
+export PORT_DISABLED=1
 
 echo "Starting AI Copilot for Instructors..."
 
