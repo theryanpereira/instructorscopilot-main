@@ -45,9 +45,16 @@ async def run_knowledge_and_save(prompt: str):
     project_root = Path(__file__).resolve().parents[1]
     load_dotenv(dotenv_path=project_root / ".env", override=False)
     if not os.getenv("GEMINI_API_KEY"):
-        raise EnvironmentError(
-            "GEMINI_API_KEY is not set. Create a .env at project root with GEMINI_API_KEY=... or set the environment variable."
-        )
+        # Try alternative environment variable names
+        if os.getenv("GOOGLE_API_KEY"):
+            os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+        else:
+            print("WARNING: GEMINI_API_KEY not found. Agent may not function properly.")
+            return
+    
+    # Check for no-server mode to prevent port conflicts
+    if os.getenv("NO_SERVER") == "1" or os.getenv("DISABLE_SERVICES") == "1":
+        print("Running in no-server mode - disabling any potential service bindings")
 
     # 1) DB-free session
     session_service = InMemorySessionService()

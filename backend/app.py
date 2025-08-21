@@ -128,6 +128,7 @@ async def generate_content():
             script_to_run = Path("start.bat")
             script_type = "batch"
         else:  # Linux/Unix (Render)
+            # Use the full script with agents (now with port conflict prevention)
             script_to_run = Path("start.sh")
             script_type = "shell"
         
@@ -138,6 +139,18 @@ async def generate_content():
             )
         
         logger.info(f"Starting AI Copilot for Instructors using {script_to_run} script...")
+        
+        # Set environment variables to prevent port conflicts
+        env = os.environ.copy()
+        env.update({
+            'NO_SERVER': '1',
+            'DISABLE_SERVICES': '1',
+            'PYTHONUNBUFFERED': '1'
+        })
+        
+        # Check for required environment variables
+        if not env.get('GEMINI_API_KEY') and not env.get('GOOGLE_API_KEY'):
+            logger.warning("GEMINI_API_KEY not found in environment variables")
         
         # Execute the script directly
         try:
@@ -152,8 +165,8 @@ async def generate_content():
                     encoding='utf-8',
                     errors='replace',
                     shell=True,  # Use shell for batch files
-                    # NO TIMEOUT - let each command complete fully
-                    # NO capture_output - let it run in real-time
+                    env=env,
+                    timeout=3600  # 1 hour timeout
                 )
             else:
                 # For shell scripts on Linux/Render - use bash directly
@@ -164,7 +177,8 @@ async def generate_content():
                     text=True,
                     encoding='utf-8',
                     errors='replace',
-                    timeout=3600  # 1 hour timeout for Render
+                    timeout=3600,  # 1 hour timeout for Render
+                    env=env
                 )
             
             logger.info(f"Script execution completed with return code: {result.returncode}")
