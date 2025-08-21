@@ -156,45 +156,24 @@ async def generate_content():
                     # NO capture_output - let it run in real-time
                 )
             else:
-                # For shell scripts, try different bash options
-                bash_found = False
-                
-                # Try Git Bash first
-                for bash_cmd in ["bash", "C:\\Program Files\\Git\\bin\\bash.exe", "C:\\Git\\bin\\bash.exe"]:
-                    try:
-                        result = subprocess.run(
-                            [bash_cmd, str(script_to_run)],
-                            cwd=Path.cwd(),
-                            capture_output=True,
-                            text=True,
-                            encoding='utf-8',
-                            errors='replace',
-                            timeout=1800
-                        )
-                        bash_found = True
-                        break
-                    except FileNotFoundError:
-                        continue
-                
-                if not bash_found:
-                    # Try WSL as last resort
-                    try:
-                        result = subprocess.run(
-                            ["wsl", "bash", str(script_to_run)],
-                            cwd=Path.cwd(),
-                            capture_output=True,
-                            text=True,
-                            encoding='utf-8',
-                            errors='replace',
-                            timeout=1800
-                        )
-                    except FileNotFoundError:
-                        raise HTTPException(
-                            status_code=500, 
-                            detail="No bash environment found. Please use start.bat instead of start.sh on Windows, or install Git Bash/WSL."
-                        )
+                # For shell scripts on Linux/Render - use bash directly
+                result = subprocess.run(
+                    ["bash", str(script_to_run)],
+                    cwd=Path.cwd(),
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8',
+                    errors='replace',
+                    timeout=3600  # 1 hour timeout for Render
+                )
             
             logger.info(f"Script execution completed with return code: {result.returncode}")
+            
+            # Log script output for debugging
+            if result.stdout:
+                logger.info(f"Script stdout: {result.stdout}")
+            if result.stderr:
+                logger.error(f"Script stderr: {result.stderr}")
             
             # Check for generated content (regardless of return code, some scripts may have warnings but still generate files)
             generated_files = []
@@ -298,4 +277,6 @@ async def get_generated_files():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    # Use PORT environment variable for Render, fallback to 5000
+    port = int(os.environ.get("PORT", 5000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
