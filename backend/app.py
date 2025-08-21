@@ -11,6 +11,9 @@ from typing import Optional
 import logging
 from datetime import datetime
 
+# Set environment variables for proper encoding
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -102,6 +105,7 @@ async def upload_curriculum(
 async def generate_content():
     """
     Run the backend processing pipeline to generate course content
+    Following the exact sequence from start.sh script
     """
     try:
         # Check if user config exists
@@ -114,68 +118,110 @@ async def generate_content():
         if not pdf_file_path.exists():
             raise HTTPException(status_code=400, detail="No curriculum PDF found. Please upload curriculum first.")
         
-        logger.info("Starting backend processing pipeline...")
+        logger.info("Starting AI Copilot for Instructors...")
         
-        # Run the backend processing pipeline
-        # This follows the sequence from start.bat
+        # Run the backend processing pipeline following start.sh exactly
         try:
-            # Step 1: Generate master instructions
-            logger.info("Step 1: Generating master instructions...")
+            # Step 1: python llm.py
+            logger.info("Running: python llm.py")
             result = subprocess.run(["python", "llm.py"], 
                                   cwd=Path.cwd(), 
                                   capture_output=True, 
-                                  text=True, 
-                                  timeout=300)  # 5 minute timeout
+                                  text=True,
+                                  encoding='utf-8',
+                                  errors='replace',
+                                  timeout=300)
             
             if result.returncode != 0:
-                logger.error(f"LLM step failed: {result.stderr}")
+                logger.error(f"llm.py failed: {result.stderr}")
                 return JSONResponse(status_code=500, content={"error": f"Master instruction generation failed: {result.stderr}"})
             
-            # Step 2: Run copilot agents
-            logger.info("Step 2: Running copilot agents...")
+            logger.info("Master instructions generated.")
+            
+            # Step 2: Starting agents - cd copilot
+            logger.info("Starting agents")
             copilot_dir = Path("copilot")
             
-            # Run main.py
+            # Step 3: python main.py (in copilot directory)
+            logger.info("Running: python main.py")
             result = subprocess.run(["python", "main.py"], 
                                   cwd=copilot_dir, 
                                   capture_output=True, 
-                                  text=True, 
+                                  text=True,
+                                  encoding='utf-8',
+                                  errors='replace',
                                   timeout=300)
             
             if result.returncode != 0:
-                logger.warning(f"Main copilot step had issues: {result.stderr}")
+                logger.warning(f"main.py had issues: {result.stderr}")
             
-            # Run deep_main.py
+            # Step 4: python deep_main.py (in copilot directory)
+            logger.info("Running: python deep_main.py")
             result = subprocess.run(["python", "deep_main.py"], 
                                   cwd=copilot_dir, 
                                   capture_output=True, 
-                                  text=True, 
+                                  text=True,
+                                  encoding='utf-8',
+                                  errors='replace',
                                   timeout=300)
             
             if result.returncode != 0:
-                logger.warning(f"Deep copilot step had issues: {result.stderr}")
+                logger.warning(f"deep_main.py had issues: {result.stderr}")
             
-            # Step 3: Generate course materials
-            logger.info("Step 3: Generating course materials...")
-            processes = [
-                "course_material.py",
-                "quizzes.py",
-                "flash_cards.py",
-                "ppt.py"
-            ]
+            # Step 5: cd .. (back to main directory) - python course_material.py
+            logger.info("Running: python course_material.py")
+            result = subprocess.run(["python", "course_material.py"], 
+                                  cwd=Path.cwd(), 
+                                  capture_output=True, 
+                                  text=True,
+                                  encoding='utf-8',
+                                  errors='replace',
+                                  timeout=600)
             
-            for process in processes:
-                logger.info(f"Running {process}...")
-                result = subprocess.run(["python", process], 
-                                      cwd=Path.cwd(), 
-                                      capture_output=True, 
-                                      text=True, 
-                                      timeout=600)  # 10 minute timeout for each
-                
-                if result.returncode != 0:
-                    logger.warning(f"{process} had issues: {result.stderr}")
+            if result.returncode != 0:
+                logger.warning(f"course_material.py had issues: {result.stderr}")
             
-            logger.info("Backend processing pipeline completed!")
+            # Step 6: python quizzes.py
+            logger.info("Running: python quizzes.py")
+            result = subprocess.run(["python", "quizzes.py"], 
+                                  cwd=Path.cwd(), 
+                                  capture_output=True, 
+                                  text=True,
+                                  encoding='utf-8',
+                                  errors='replace',
+                                  timeout=600)
+            
+            if result.returncode != 0:
+                logger.warning(f"quizzes.py had issues: {result.stderr}")
+            
+            # Step 7: python flash_cards.py
+            logger.info("Running: python flash_cards.py")
+            result = subprocess.run(["python", "flash_cards.py"], 
+                                  cwd=Path.cwd(), 
+                                  capture_output=True, 
+                                  text=True,
+                                  encoding='utf-8',
+                                  errors='replace',
+                                  timeout=600)
+            
+            if result.returncode != 0:
+                logger.warning(f"flash_cards.py had issues: {result.stderr}")
+            
+            # Step 8: python ppt.py
+            logger.info("Running: python ppt.py")
+            result = subprocess.run(["python", "ppt.py"], 
+                                  cwd=Path.cwd(), 
+                                  capture_output=True, 
+                                  text=True,
+                                  encoding='utf-8',
+                                  errors='replace',
+                                  timeout=600)
+            
+            if result.returncode != 0:
+                logger.warning(f"ppt.py had issues: {result.stderr}")
+            
+            # Step 9: cd .. (final step - already in root directory)
+            logger.info("AI Copilot for Instructors processing completed!")
             
             # Check for generated content
             generated_files = []
@@ -193,9 +239,10 @@ async def generate_content():
             return JSONResponse(
                 status_code=200,
                 content={
-                    "message": "Content generation completed successfully",
+                    "message": "AI Copilot for Instructors completed successfully",
                     "generated_files": generated_files,
-                    "total_files": len(generated_files)
+                    "total_files": len(generated_files),
+                    "process_completed": True
                 }
             )
             

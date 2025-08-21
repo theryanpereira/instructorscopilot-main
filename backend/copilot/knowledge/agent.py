@@ -44,7 +44,7 @@ The structured input will always include:
     * Exploratory & Guided
     * Project-Based / Hands-On
     * Conceptual & Conversational  
-  ✅ Always combined with the default **Clear & Structured** approach
+  [✓] Always combined with the default **Clear & Structured** approach
 - Optional learner profiles (learning styles)
 - Optional pedagogy notes, timeline, and assessment plan
 
@@ -102,7 +102,7 @@ For each **Module/Week**:
         * Learning Style Supported
         * Confidence Level (High / Medium / Low authority)
         * License type (if applicable)
-        * 1–2 sentence rationale
+        * 1-2 sentence rationale
 
 ---
 
@@ -138,9 +138,9 @@ For each **Module/Week**:
     * Quality of structure/examples/references
     * Reputation signals (citations, community trust)
 - Confidence Levels:
-    * 🔵 High: Peer-reviewed, institution-backed, widely trusted
-    * 🟡 Medium: Popular blogs, reputable tutorials, community-endorsed
-    * 🔴 Low: Unverified/anonymous — use only if fallback is needed
+    * [BLUE] High: Peer-reviewed, institution-backed, widely trusted
+    * [YELLOW] Medium: Popular blogs, reputable tutorials, community-endorsed
+    * [RED] Low: Unverified/anonymous - use only if fallback is needed
 - Sparse coverage handling:
     * Return best-available with rationale
     * Combine partial sources into coherent coverage

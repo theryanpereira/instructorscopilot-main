@@ -67,7 +67,7 @@ async def run_knowledge_and_save(prompt: str):
     #    (Sequential/Loop agent semantics in ADK docs)
     runner = Runner(agent=final_pipeline, app_name=APP_NAME, session_service=session_service)
 
-    print("\n=== Running Knowledge Pipeline (Planner → Content) ===")
+    print("\n=== Running Knowledge Pipeline (Planner -> Content) ===")
     # Stream buckets as a fallback if session.state isn't filled
     stream_bucket = {
         "CoursePlannerAgent": [],

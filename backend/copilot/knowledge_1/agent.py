@@ -87,33 +87,33 @@ CONTENT STRUCTURE FOR EACH WEEK:
 
 # Week [Number]: [Week Title] - From Real-World Problem to Solution
 
-## 🔗 Connecting from Previous Weeks (if applicable)
+## Connecting from Previous Weeks (if applicable)
 Briefly recap what was covered before and explain how it links to this week's topic.
 
-## 🔍 The Real-World Problem
+## The Real-World Problem
 - Describe a real scenario, challenge, or case study where the topic is relevant
 - Explain why this problem matters and its real consequences
 
-## 💡 Introducing the Topic as the Solution
+## Introducing the Topic as the Solution
 - Present the main concept for this week
 - Explain how it solves the problem
 - Highlight why this solution is better than alternatives
 
-## 📚 Deep Explanation
+## Deep Explanation
 - Cover **all sub-classifications, definitions, and related concepts**
 - Break down complex ideas into smaller steps
 - Use analogies or relatable examples to improve understanding
 - Show historical context if relevant
 - Ensure explanations are enriched with **verified, up-to-date information from Google Search**
 
-## 🌟 Practical Examples
-- Provide 2–4 detailed, realistic examples
+## Practical Examples
+- Provide 2-4 detailed, realistic examples
 - Each example should explain the setup, steps, and outcomes
 
-## 📖 Additional Case Studies (if possible)
-- Provide 1–2 short real-world cases showing the concept in action
+## Additional Case Studies (if possible)
+- Provide 1-2 short real-world cases showing the concept in action
 
-## 🚀 Looking Ahead
+## Looking Ahead
 - Summarize key takeaways
 - Explain how this week's content sets up the next week's learning
 
