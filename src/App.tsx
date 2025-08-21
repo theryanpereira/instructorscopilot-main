@@ -12,6 +12,7 @@ import Students from "./pages/Students";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
+import AuthCallback from "./pages/AuthCallback";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Support from "./pages/Support";
@@ -19,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import { Layout } from "@/components/layout/Layout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 
 const queryClient = new QueryClient();
 
@@ -38,12 +40,15 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/support" element={<Support />} />
               <Route path="/onboarding" element={
                 <ProtectedRoute>
-                  <Onboarding />
+                  <OnboardingGuard>
+                    <Onboarding />
+                  </OnboardingGuard>
                 </ProtectedRoute>
               } />
               <Route element={

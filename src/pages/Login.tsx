@@ -8,11 +8,12 @@ import { Separator } from "@/components/ui/separator";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Footer } from "@/components/layout/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, checkUserProfileAndRedirect } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,13 +32,14 @@ const Login = () => {
     
     try {
       if (isLogin) {
-        // Login logic
+        // Login logic - let AuthContext handle the redirect
         const { error } = await signIn(formData.email, formData.password);
         if (!error) {
-          navigate(from, { replace: true });
+          // AuthContext will handle the redirect in onAuthStateChange
+          // Don't navigate here, let the auth state change handle it
         }
       } else {
-        // Sign up logic
+        // Sign up logic - always go to onboarding for new users
         if (formData.password !== formData.confirmPassword) {
           return;
         }

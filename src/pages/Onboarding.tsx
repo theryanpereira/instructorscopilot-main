@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowRight, Upload, FileText, BookOpen, CheckCircle, Play, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRight, BookOpen, CheckCircle, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,15 @@ import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/layout/Footer";
+import { useAuth } from "@/contexts/AuthContext";
+import { userAPI } from "@/lib/api";
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [formData, setFormData] = useState({
     teachingSubject: "",
     fullName: "", // New field for full name
@@ -22,12 +26,44 @@ const Onboarding = () => {
     goals: []
   });
 
-  // Async function to save user name to the backend
-  const saveUserNameToBackend = async (fullName: string) => {
-    // Retrieve user_id from localStorage
-    const user_id = localStorage.getItem('user_id');
-    if (!user_id) {
-      console.error("Error: user_id not found in localStorage. Cannot save user name.");
+  // Check if user already has a profile and redirect to dashboard
+  useEffect(() => {
+    const checkExistingProfile = async () => {
+      if (user?.id) {
+        try {
+          const profile = await userAPI.getProfile(user.id);
+          if (profile && profile.full_name) {
+            // User has already completed onboarding, redirect to dashboard
+            toast({
+              title: "Welcome back!",
+              description: "You're all set up. Taking you to your dashboard.",
+            });
+            navigate("/dashboard", { replace: true });
+            return;
+          }
+        } catch (error) {
+          console.error("Error checking user profile:", error);
+        }
+      }
+      setIsCheckingProfile(false);
+    };
+
+    checkExistingProfile();
+  }, [user, navigate, toast]);
+
+  // Pre-fill name from Google OAuth if available
+  useEffect(() => {
+    if (user && user.user_metadata?.full_name) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.user_metadata.full_name
+      }));
+    }
+  }, [user]);
+
+  // Save user profile to Supabase
+  const saveUserProfile = async (fullName: string, teachingSubject: string, experience: string) => {
+    if (!user?.id) {
       toast({
         title: "Error",
         description: "User session not found. Please log in again.",
@@ -37,53 +73,26 @@ const Onboarding = () => {
     }
 
     try {
-      const payload = {
-        user_id: user_id,
-        user_name: fullName,
-      };
-
-      // TEST CODE: Log payload before sending
-      console.log("TEST CODE: Sending payload to /save-user-name:", payload);
-
-      const response = await fetch('/save-user-name', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+      await userAPI.upsertProfile({
+        user_id: user.id,
+        full_name: fullName,
+        subject_areas: teachingSubject ? [teachingSubject] : [],
+        role: experience, // Store experience level in role field
       });
 
-      if (response.ok) {
-        console.log("User name saved to backend successfully.");
-        // TEST CODE: Log successful response
-        console.log("TEST CODE: /save-user-name success response:", await response.json());
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to save user name to backend.", errorData);
-        // TEST CODE: Log error response
-        console.error("TEST CODE: /save-user-name error response:", errorData);
-      }
+      console.log("User profile saved successfully.");
     } catch (error) {
-      console.error("Error sending user name to backend:", error);
-      // TEST CODE: Log catch error
-      console.error("TEST CODE: Error in saveUserNameToBackend catch block:", error);
-    }
-  };
-
-  // File validation handler
-  const handleFileChange = (e, allowedTypes, label) => {
-    const file = e.target.files?.[0];
-    if (file && !allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) {
+      console.error("Error saving user profile:", error);
       toast({
-        title: 'Invalid file type',
-        description: `Please upload a valid ${label} file (${allowedTypes.join(', ')})`,
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive",
       });
-      e.target.value = '';
+      throw error;
     }
   };
 
-  const totalSteps = 2;
+  const totalSteps = 1;
   const progress = (currentStep / totalSteps) * 100;
 
   const goals = [
@@ -112,20 +121,19 @@ const Onboarding = () => {
       return;
     }
 
-    // If currently on Step 1, save the full name to the backend
-    if (currentStep === 1) {
-      await saveUserNameToBackend(formData.fullName);
-    }
+    try {
+      // Save the user profile to Supabase
+      await saveUserProfile(formData.fullName, formData.teachingSubject, formData.experience);
 
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      // Complete onboarding
+      // Complete onboarding and go directly to dashboard
       toast({
         title: "Welcome to Masterplan!",
         description: "Your account is all set up. Let's start creating amazing courses.",
       });
       navigate("/dashboard");
+    } catch (error) {
+      // Error toast is already shown in saveUserProfile
+      console.error("Error during onboarding completion:", error);
     }
   };
 
@@ -174,6 +182,7 @@ const Onboarding = () => {
                 <Label htmlFor="experience">Teaching experience <span className="text-red-500">*</span></Label>
                 <select 
                   id="experience"
+                  title="Select your teaching experience level"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
                   value={formData.experience}
                   onChange={(e) => setFormData(prev => ({ ...prev, experience: e.target.value }))}
@@ -188,37 +197,22 @@ const Onboarding = () => {
           </Card>
         );
 
-      case 2:
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-primary" />
-                Set Up Student Intake (optional)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-               <p className="text-muted-foreground">
-                Upload a .csv file with student information to personalize content for each student.
-              </p>
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Drag and drop a .csv file here, or click to upload
-                </p>
-                <Button variant="outline" onClick={() => document.getElementById('onboarding-csv-upload')?.click()}>
-                  Upload CSV
-                </Button>
-                <Input id="onboarding-csv-upload" type="file" accept=".csv" className="hidden" onChange={e => handleFileChange(e, ['.csv'], 'CSV')} />
-              </div>
-            </CardContent>
-          </Card>
-        );
-
       default:
         return null;
     }
   };
+
+  // Show loading while checking profile
+  if (isCheckingProfile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Checking your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -257,17 +251,9 @@ const Onboarding = () => {
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-            disabled={currentStep === 1}
-          >
-            Previous
-          </Button>
-          
+        <div className="flex justify-end">
           <Button onClick={handleNext}>
-            {currentStep === totalSteps ? "Get Started" : "Next"}
+            Get Started
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, AuthError, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { userAPI } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +12,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name?: string) => Promise<{ error?: AuthError }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error?: AuthError }>;
+  checkUserProfileAndRedirect: (userId: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,11 +53,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        if (event === 'SIGNED_IN') {
-          toast({
-            title: "Welcome!",
-            description: "You've been successfully signed in.",
-          });
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Check if we're on login or auth callback page to handle redirect
+          const currentPath = window.location.pathname;
+          if (currentPath === '/login' || currentPath === '/auth/callback') {
+            try {
+              const profile = await userAPI.getProfile(session.user.id);
+              if (profile && profile.full_name) {
+                // Existing user - redirect to dashboard
+                toast({
+                  title: "Welcome back!",
+                  description: "Taking you to your dashboard.",
+                });
+                window.location.href = '/dashboard';
+              } else {
+                // New user - redirect to onboarding
+                toast({
+                  title: "Welcome!",
+                  description: "Let's set up your profile.",
+                });
+                window.location.href = '/onboarding';
+              }
+            } catch (error) {
+              console.error("Error checking profile during sign in:", error);
+              // Default to onboarding if profile check fails
+              window.location.href = '/onboarding';
+            }
+          } else {
+            toast({
+              title: "Welcome!",
+              description: "You've been successfully signed in.",
+            });
+          }
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Signed out",
@@ -154,7 +183,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
@@ -179,6 +208,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const checkUserProfileAndRedirect = async (userId: string): Promise<string> => {
+    try {
+      const profile = await userAPI.getProfile(userId);
+      if (profile && profile.full_name) {
+        // User has completed onboarding, go to dashboard
+        return "/dashboard";
+      } else {
+        // User needs to complete onboarding
+        return "/onboarding";
+      }
+    } catch (error) {
+      console.error("Error checking user profile:", error);
+      // Default to onboarding if we can't check profile
+      return "/onboarding";
+    }
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -187,6 +233,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signUp,
     signOut,
     signInWithGoogle,
+    checkUserProfileAndRedirect,
   };
 
   return (
