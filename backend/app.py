@@ -22,14 +22,19 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Instructors Copilot API", version="1.0.0")
 
 # CORS middleware to allow frontend to connect
+cors_env = os.environ.get("BACKEND_CORS_ORIGINS", "")
+extra_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
+default_origins = [
+        "http://localhost:8080",
+        "http://localhost:5173",
+        "https://instructorscopilot-main-lovat.vercel.app",
+        "https://*.vercel.app",
+]
+allow_origins = list({*default_origins, *extra_origins})
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "http://localhost:5173", 
-        "https://instructorscopilot-main-lovat.vercel.app",  # Remove trailing slash
-        "https://*.vercel.app"  # Allow all Vercel preview deployments
-    ],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -123,13 +128,13 @@ async def generate_content():
         if not pdf_file_path.exists():
             raise HTTPException(status_code=400, detail="No curriculum PDF found. Please upload curriculum first.")
         
-        # Check if start.sh or start.bat exists based on platform
+        # Resolve backend directory and select script per platform
+        backend_dir = Path(__file__).resolve().parent
         if platform.system() == "Windows":
-            script_to_run = Path("start.bat")
+            script_to_run = backend_dir / "start.bat"
             script_type = "batch"
         else:  # Linux/Unix (Render)
-            # Use the full script with agents (now with port conflict prevention)
-            script_to_run = Path("start.sh")
+            script_to_run = backend_dir / "start.sh"
             script_type = "shell"
         
         if not script_to_run.exists():
@@ -160,7 +165,7 @@ async def generate_content():
                 # On Windows, run the batch file directly with proper sequential execution
                 result = subprocess.run(
                     [str(script_to_run)],
-                    cwd=Path.cwd(),
+                    cwd=backend_dir,
                     text=True,
                     encoding='utf-8',
                     errors='replace',
@@ -172,7 +177,7 @@ async def generate_content():
                 # For shell scripts on Linux/Render - use bash directly
                 result = subprocess.run(
                     ["bash", str(script_to_run)],
-                    cwd=Path.cwd(),
+                    cwd=backend_dir,
                     capture_output=True,
                     text=True,
                     encoding='utf-8',
