@@ -146,7 +146,7 @@ export function PersonalizedGenerator() {
         teaching_style: getTeachingStyleLabel(contentRequest.teachingStyle)
       });
 
-      const uploadResponse = await fetch('http://localhost:5000/upload-curriculum/', {
+      const uploadResponse = await fetch('https://instructorscopilot-main.onrender.com/upload-curriculum/', {
         method: 'POST',
         body: formData,
       });
@@ -165,7 +165,7 @@ export function PersonalizedGenerator() {
       });
 
       // Step 2: Generate content
-      const generateResponse = await fetch('http://localhost:5000/generate-content/', {
+      const generateResponse = await fetch('https://instructorscopilot-main.onrender.com/generate-content/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
