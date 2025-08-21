@@ -187,131 +187,125 @@ def create_combined_docx(content, course_title, output_dir):
     title = doc.add_heading(f'{course_title}', 0)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     
-    # Course Overview
-    doc.add_heading('Course Overview', 1)
-    doc.add_paragraph('─' * 60)
-    overview_text = _extract_section(content, r"##\s*(Course Overview|Overview|Course Description)\s*")
-    doc.add_paragraph(overview_text or "")
-
-    # Weekly Summary
-    weekly_summary = _extract_section(content, r"##\s*Weekly\s*Summary\s*")
-    if weekly_summary:
-        doc.add_paragraph()
-        doc.add_heading('Weekly Summary', 1)
-        doc.add_paragraph('─' * 60)
-        for line in weekly_summary.split('\n'):
-            t = line.strip()
-            if not t:
-                continue
-            t = re.sub(r'^[-*]\s*', '', t)
-            doc.add_paragraph(t, style='List Bullet')
-
-    # Detailed Week sections: each on a new page
-    weeks = _parse_weeks_simple(content)
-    for week_idx, week in enumerate(weeks):
-        if week_idx > 0:
-            doc.add_page_break()
-        # Add week heading
-        week_title_line = week['title'].replace('#', '').strip()
-        doc.add_heading(week_title_line, 1)
-        doc.add_paragraph('─' * 60)
+    # Process the content line by line to maintain order and avoid duplication
+    lines = content.split('\n')
+    current_paragraph = ""
+    in_code_block = False
+    week_started = False
+    
+    for line in lines:
+        original_line = line
+        line = line.strip()
         
-        # Render week content paragraphs and lists
-        lines = week['content'].split('\n')
-        current_paragraph = ""
-        in_code_block = False
-        for line in lines:
-            original_line = line
-            line = line.strip()
-            if not line:
-                if current_paragraph:
-                    if '**' in current_paragraph:
-                        p = doc.add_paragraph()
-                        parts = current_paragraph.split('**')
-                        for i, part in enumerate(parts):
-                            run = p.add_run(part)
-                            if i % 2 == 1:
-                                run.bold = True
-                    else:
-                        doc.add_paragraph(current_paragraph)
-                    current_paragraph = ""
-                doc.add_paragraph()
-                continue
-            if line.startswith('```'):
-                if current_paragraph:
-                    doc.add_paragraph(current_paragraph)
-                    current_paragraph = ""
-                in_code_block = not in_code_block
-                continue
-            if in_code_block:
-                p = doc.add_paragraph(original_line)
-                for run in p.runs:
-                    run.font.name = 'Courier New'
-                    run.font.size = Inches(0.1)
-                continue
-            if line.startswith('#### '):
-                if current_paragraph:
-                    doc.add_paragraph(current_paragraph)
-                    current_paragraph = ""
-                doc.add_heading(line.replace('#### ', ''), 4)
-            elif line.startswith('### '):
-                if current_paragraph:
-                    doc.add_paragraph(current_paragraph)
-                    current_paragraph = ""
-                doc.add_heading(line.replace('### ', ''), 3)
-            elif line.startswith('## '):
-                if current_paragraph:
-                    doc.add_paragraph(current_paragraph)
-                    current_paragraph = ""
-                doc.add_heading(line.replace('## ', ''), 2)
-            elif line.startswith('- ') or line.startswith('* '):
-                if current_paragraph:
-                    doc.add_paragraph(current_paragraph)
-                    current_paragraph = ""
-                bullet_text = line.replace('- ', '').replace('* ', '')
-                if '**' in bullet_text:
-                    p = doc.add_paragraph(style='List Bullet')
-                    parts = bullet_text.split('**')
+        # Skip the main title if it appears in content (already added above)
+        if line.startswith('# Course Name:') or (line.startswith('#') and course_title.lower() in line.lower() and not line.startswith('# Week')):
+            continue
+        
+        if not line:
+            if current_paragraph:
+                if '**' in current_paragraph:
+                    p = doc.add_paragraph()
+                    parts = current_paragraph.split('**')
                     for i, part in enumerate(parts):
                         run = p.add_run(part)
                         if i % 2 == 1:
                             run.bold = True
                 else:
-                    doc.add_paragraph(bullet_text, style='List Bullet')
-            elif re.match(r'^\d+\. ', line):
-                if current_paragraph:
                     doc.add_paragraph(current_paragraph)
-                    current_paragraph = ""
-                list_text = re.sub(r'^\d+\. ', '', line)
-                if '**' in list_text:
-                    p = doc.add_paragraph(style='List Number')
-                    parts = list_text.split('**')
-                    for i, part in enumerate(parts):
-                        run = p.add_run(part)
-                        if i % 2 == 1:
-                            run.bold = True
-                else:
-                    doc.add_paragraph(list_text, style='List Number')
-            elif line.startswith('---') or line == '=' * len(line):
-                if current_paragraph:
-                    doc.add_paragraph(current_paragraph)
-                    current_paragraph = ""
-                doc.add_paragraph('─' * 60)
-            else:
-                if current_paragraph:
-                    current_paragraph += " " + line
-                else:
-                    current_paragraph = line
-        if current_paragraph:
-            if '**' in current_paragraph:
-                p = doc.add_paragraph()
-                parts = current_paragraph.split('**')
+                current_paragraph = ""
+            doc.add_paragraph()
+            continue
+            
+        if line.startswith('```'):
+            if current_paragraph:
+                doc.add_paragraph(current_paragraph)
+                current_paragraph = ""
+            in_code_block = not in_code_block
+            continue
+            
+        if in_code_block:
+            p = doc.add_paragraph(original_line)
+            for run in p.runs:
+                run.font.name = 'Courier New'
+                run.font.size = Inches(0.1)
+            continue
+        
+        # Handle Week headers - add page break before each week (except first)
+        if line.startswith('# Week '):
+            if current_paragraph:
+                doc.add_paragraph(current_paragraph)
+                current_paragraph = ""
+            if week_started:  # Add page break before subsequent weeks
+                doc.add_page_break()
+            week_started = True
+            doc.add_heading(line.replace('# ', ''), 1)
+            doc.add_paragraph('─' * 60)
+        elif line.startswith('#### '):
+            if current_paragraph:
+                doc.add_paragraph(current_paragraph)
+                current_paragraph = ""
+            doc.add_heading(line.replace('#### ', ''), 4)
+        elif line.startswith('### '):
+            if current_paragraph:
+                doc.add_paragraph(current_paragraph)
+                current_paragraph = ""
+            doc.add_heading(line.replace('### ', ''), 3)
+        elif line.startswith('## '):
+            if current_paragraph:
+                doc.add_paragraph(current_paragraph)
+                current_paragraph = ""
+            doc.add_heading(line.replace('## ', ''), 2)
+            doc.add_paragraph('─' * 60)
+        elif line.startswith('- ') or line.startswith('* '):
+            if current_paragraph:
+                doc.add_paragraph(current_paragraph)
+                current_paragraph = ""
+            bullet_text = line.replace('- ', '').replace('* ', '')
+            if '**' in bullet_text:
+                p = doc.add_paragraph(style='List Bullet')
+                parts = bullet_text.split('**')
                 for i, part in enumerate(parts):
                     run = p.add_run(part)
                     if i % 2 == 1:
                         run.bold = True
             else:
+                doc.add_paragraph(bullet_text, style='List Bullet')
+        elif re.match(r'^\d+\. ', line):
+            if current_paragraph:
                 doc.add_paragraph(current_paragraph)
+                current_paragraph = ""
+            list_text = re.sub(r'^\d+\. ', '', line)
+            if '**' in list_text:
+                p = doc.add_paragraph(style='List Number')
+                parts = list_text.split('**')
+                for i, part in enumerate(parts):
+                    run = p.add_run(part)
+                    if i % 2 == 1:
+                        run.bold = True
+            else:
+                doc.add_paragraph(list_text, style='List Number')
+        elif line.startswith('---') or line == '=' * len(line):
+            if current_paragraph:
+                doc.add_paragraph(current_paragraph)
+                current_paragraph = ""
+            doc.add_paragraph('─' * 60)
+        else:
+            if current_paragraph:
+                current_paragraph += " " + line
+            else:
+                current_paragraph = line
+    
+    # Add any remaining paragraph
+    if current_paragraph:
+        if '**' in current_paragraph:
+            p = doc.add_paragraph()
+            parts = current_paragraph.split('**')
+            for i, part in enumerate(parts):
+                run = p.add_run(part)
+                if i % 2 == 1:
+                    run.bold = True
+        else:
+            doc.add_paragraph(current_paragraph)
         
     # Save document
     filename = f"{sanitize_filename(course_title)}.docx"
@@ -324,7 +318,7 @@ def create_combined_docx(content, course_title, output_dir):
         return None
 
 def create_combined_pdf(content, course_title, output_dir):
-    """Create PDF with layout: Title, Course Overview, Weekly Summary, Week sections (page breaks)."""
+    """Create PDF with layout: Title, then all content in order as generated by LLM."""
     filename = f"{sanitize_filename(course_title)}.pdf"
     filepath = os.path.join(output_dir, filename)
     
@@ -348,15 +342,6 @@ def create_combined_pdf(content, course_title, output_dir):
             spaceAfter=30,
             alignment=TA_CENTER,
             textColor='darkblue'
-        )
-        
-        subtitle_style = ParagraphStyle(
-            'CustomSubtitle',
-            parent=styles['Heading2'],
-            fontSize=18,
-            spaceAfter=20,
-            alignment=TA_CENTER,
-            textColor='blue'
         )
         
         week_heading_style = ParagraphStyle(
@@ -402,126 +387,33 @@ def create_combined_pdf(content, course_title, output_dir):
         elements.append(Paragraph(course_title, title_style))
         elements.append(Spacer(1, 30))
         
-        # Course Overview
-        elements.append(Paragraph("Course Overview", week_heading_style))
-        elements.append(Spacer(1, 10))
+        # Process content line by line to maintain order
+        lines = content.split('\n')
+        current_paragraph = ""
+        week_started = False
         
-        overview_text = _extract_section(content, r"##\s*(Course Overview|Overview|Course Description)\s*") or ""
-        if overview_text:
-            try:
-                elements.append(Paragraph(overview_text, normal_style))
-            except:
-                clean_overview = re.sub(r'<[^>]+>', '', overview_text)
-                elements.append(Paragraph(clean_overview, normal_style))
-        
-        elements.append(Spacer(1, 20))
-
-        # Weekly Summary
-        weekly_summary = _extract_section(content, r"##\s*Weekly\s*Summary\s*")
-        if weekly_summary:
-            elements.append(Paragraph("Weekly Summary", week_heading_style))
-            elements.append(Spacer(1, 6))
-            for line in weekly_summary.split('\n'):
-                t = line.strip()
-                if not t:
-                    continue
-                t = re.sub(r'^[-*]\s*', '', t)
-                try:
-                    elements.append(Paragraph(f"• {t}", bullet_style))
-                except:
-                    clean_b = re.sub(r'<[^>]+>', '', t)
-                    elements.append(Paragraph(f"• {clean_b}", bullet_style))
-            elements.append(Spacer(1, 20))
-        
-        # Detailed week content - each week starts on a new page
-        weeks = _parse_weeks_simple(content)
-        if weeks:
-            for week_idx, week in enumerate(weeks):
-                # Add week heading
-                week_title = week['title'].replace('#', '').strip()
-                
-                elements.append(Paragraph(week_title, week_heading_style))
-                elements.append(Spacer(1, 10))
-                
-                # Process week content
-                lines = week['content'].split('\n')
-                current_paragraph = ""
-                
-                for line in lines:
-                    line = line.strip()
-                    
-                    if not line:
-                        if current_paragraph:
-                            # Clean and format paragraph
-                            clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
-                            clean_para = re.sub(r'\*(.*?)\*', r'<i>\1</i>', clean_para)
-                            try:
-                                elements.append(Paragraph(clean_para, normal_style))
-                            except:
-                                clean_para = re.sub(r'<[^>]+>', '', clean_para)
-                                elements.append(Paragraph(clean_para, normal_style))
-                            current_paragraph = ""
-                        elements.append(Spacer(1, 6))
-                        continue
-                    
-                    # Skip the main week header (already processed)
-                    if line.startswith('# Week '):
-                        continue
-                    
-                    # Handle headings
-                    if line.startswith('### ') or line.startswith('## '):
-                        if current_paragraph:
-                            clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
-                            try:
-                                elements.append(Paragraph(clean_para, normal_style))
-                            except:
-                                clean_para = re.sub(r'<[^>]+>', '', clean_para)
-                                elements.append(Paragraph(clean_para, normal_style))
-                            current_paragraph = ""
-                        
-                        heading_text = line.replace('### ', '').replace('## ', '')
-                        elements.append(Paragraph(heading_text, section_heading_style))
-                        elements.append(Spacer(1, 5))
-                    
-                    # Handle bullet points
-                    elif line.startswith('- ') or line.startswith('* '):
-                        if current_paragraph:
-                            clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
-                            try:
-                                elements.append(Paragraph(clean_para, normal_style))
-                            except:
-                                clean_para = re.sub(r'<[^>]+>', '', clean_para)
-                                elements.append(Paragraph(clean_para, normal_style))
-                            current_paragraph = ""
-                        
-                        bullet_text = line.replace('- ', '').replace('* ', '')
-                        bullet_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', bullet_text)
-                        try:
-                            elements.append(Paragraph(f"• {bullet_text}", bullet_style))
-                        except:
-                            clean_bullet = re.sub(r'<[^>]+>', '', bullet_text)
-                            elements.append(Paragraph(f"• {clean_bullet}", bullet_style))
-                    
-                    # Handle separator lines
-                    elif line.startswith('---') or line == '=' * len(line):
-                        if current_paragraph:
-                            clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
-                            try:
-                                elements.append(Paragraph(clean_para, normal_style))
-                            except:
-                                clean_para = re.sub(r'<[^>]+>', '', clean_para)
-                                elements.append(Paragraph(clean_para, normal_style))
-                            current_paragraph = ""
-                        elements.append(Spacer(1, 10))
-                    
-                    # Regular content
-                    else:
-                        if current_paragraph:
-                            current_paragraph += " " + line
-                        else:
-                            current_paragraph = line
-                
-                # Add any remaining paragraph
+        for line in lines:
+            line = line.strip()
+            
+            # Skip the main title if it appears in content (already added above)
+            if line.startswith('# Course Name:') or (line.startswith('#') and course_title.lower() in line.lower() and not line.startswith('# Week')):
+                continue
+            
+            if not line:
+                if current_paragraph:
+                    clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
+                    clean_para = re.sub(r'\*(.*?)\*', r'<i>\1</i>', clean_para)
+                    try:
+                        elements.append(Paragraph(clean_para, normal_style))
+                    except:
+                        clean_para = re.sub(r'<[^>]+>', '', clean_para)
+                        elements.append(Paragraph(clean_para, normal_style))
+                    current_paragraph = ""
+                elements.append(Spacer(1, 6))
+                continue
+            
+            # Handle Week headers - add page break before each week (except first)
+            if line.startswith('# Week '):
                 if current_paragraph:
                     clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
                     try:
@@ -529,10 +421,77 @@ def create_combined_pdf(content, course_title, output_dir):
                     except:
                         clean_para = re.sub(r'<[^>]+>', '', clean_para)
                         elements.append(Paragraph(clean_para, normal_style))
+                    current_paragraph = ""
                 
-                # Add page break between weeks (except for last week)
-                if week_idx < len(weeks) - 1:
+                if week_started:  # Add page break before subsequent weeks
                     elements.append(PageBreak())
+                week_started = True
+                
+                week_title = line.replace('# ', '')
+                elements.append(Paragraph(week_title, week_heading_style))
+                elements.append(Spacer(1, 10))
+            
+            # Handle other headings
+            elif line.startswith('### ') or line.startswith('## '):
+                if current_paragraph:
+                    clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
+                    try:
+                        elements.append(Paragraph(clean_para, normal_style))
+                    except:
+                        clean_para = re.sub(r'<[^>]+>', '', clean_para)
+                        elements.append(Paragraph(clean_para, normal_style))
+                    current_paragraph = ""
+                
+                heading_text = line.replace('### ', '').replace('## ', '')
+                elements.append(Paragraph(heading_text, section_heading_style))
+                elements.append(Spacer(1, 5))
+            
+            # Handle bullet points
+            elif line.startswith('- ') or line.startswith('* '):
+                if current_paragraph:
+                    clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
+                    try:
+                        elements.append(Paragraph(clean_para, normal_style))
+                    except:
+                        clean_para = re.sub(r'<[^>]+>', '', clean_para)
+                        elements.append(Paragraph(clean_para, normal_style))
+                    current_paragraph = ""
+                
+                bullet_text = line.replace('- ', '').replace('* ', '')
+                bullet_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', bullet_text)
+                try:
+                    elements.append(Paragraph(f"• {bullet_text}", bullet_style))
+                except:
+                    clean_bullet = re.sub(r'<[^>]+>', '', bullet_text)
+                    elements.append(Paragraph(f"• {clean_bullet}", bullet_style))
+            
+            # Handle separator lines
+            elif line.startswith('---') or line == '=' * len(line):
+                if current_paragraph:
+                    clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
+                    try:
+                        elements.append(Paragraph(clean_para, normal_style))
+                    except:
+                        clean_para = re.sub(r'<[^>]+>', '', clean_para)
+                        elements.append(Paragraph(clean_para, normal_style))
+                    current_paragraph = ""
+                elements.append(Spacer(1, 10))
+            
+            # Regular content
+            else:
+                if current_paragraph:
+                    current_paragraph += " " + line
+                else:
+                    current_paragraph = line
+        
+        # Add any remaining paragraph
+        if current_paragraph:
+            clean_para = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', current_paragraph)
+            try:
+                elements.append(Paragraph(clean_para, normal_style))
+            except:
+                clean_para = re.sub(r'<[^>]+>', '', clean_para)
+                elements.append(Paragraph(clean_para, normal_style))
         
         # Build PDF
         doc.build(elements)
@@ -541,6 +500,7 @@ def create_combined_pdf(content, course_title, output_dir):
     except Exception as e:
         return None
 
+# Update the LLM prompt to ensure proper structure ordering
 def build_structured_text_llm(raw_corpus: str, planner_text: str, title_hint: str | None) -> str | None:
     """Use LLM to produce strict structured text with required layout."""
     if not (get_gemini_client and get_google_search_tool and generate_course_content and system_prompt):
@@ -562,18 +522,12 @@ def build_structured_text_llm(raw_corpus: str, planner_text: str, title_hint: st
         "- Synthesize information from multiple sources to create coherent, comprehensive weekly modules\n"
         "- Ensure content builds progressively from week to week with clear connections\n\n"
         
-        "AUDIENCE & PEDAGOGICAL APPROACH\n"
-        "- Match the exact difficulty level and teaching style specified in the planner (e.g., Intermediate, Project-Based/Hands-On)\n"
-        "- Use a clear, structured, yet engaging tone that balances academic rigor with practical applicability\n"
-        "- Define all technical terms and jargon on first use with clear explanations\n"
-        "- Include multiple learning modalities: conceptual explanations, visual descriptions, practical examples, and hands-on activities\n"
-        "- Make content self-contained and ready for immediate classroom use\n\n"
-        
         "STRICT TOP-LEVEL STRUCTURE (must follow exactly)\n"
-        "1) Title line (plain text): Extract the exact course name from planner or create an appropriate title\n"
-        "2) '## Course Overview' – 2-3 comprehensive paragraphs covering scope, objectives, and learning outcomes\n"
-        "3) '## Weekly Summary' – detailed bullet points (3-4 lines each) summarizing each week's focus and deliverables\n"
-        "4) Individual week sections starting with '# Week N: <descriptive title>' in ascending order\n"
+        "1) DO NOT include a title line - the title will be handled separately\n"
+        "2) Start directly with '## Course Overview' – 2-3 comprehensive paragraphs covering scope, objectives, and learning outcomes\n"
+        "3) '## Prerequisites' – detailed list of required knowledge, skills, and background\n"
+        "4) '## Weekly Summary' – detailed bullet points (3-4 lines each) summarizing each week's focus and deliverables\n"
+        "5) Individual week sections starting with '# Week N: <descriptive title>' in ascending order\n"
         "   After the last week, STOP. No additional sections.\n\n"
         
         "COMPREHENSIVE WEEK SECTION REQUIREMENTS (8+ pages per week)\n"
