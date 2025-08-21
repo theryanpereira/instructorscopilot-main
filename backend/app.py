@@ -25,8 +25,10 @@ app = FastAPI(title="Instructors Copilot API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:8080", 
-        "https://instructorscopilot-main-lovat.vercel.app/"  # Add your Vercel URL
+        "http://localhost:8080",
+        "http://localhost:5173", 
+        "https://instructorscopilot-main-lovat.vercel.app",  # Remove trailing slash
+        "https://*.vercel.app"  # Allow all Vercel preview deployments
     ],
     allow_credentials=True,
     allow_methods=["*"],

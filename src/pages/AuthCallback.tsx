@@ -11,8 +11,9 @@ const AuthCallback = () => {
     const handleAuthCallback = async () => {
       try {
         console.log("Processing OAuth callback...");
+        console.log("Current URL:", window.location.href);
         
-        // Get the session from the URL hash
+        // Handle OAuth callback from URL hash
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
