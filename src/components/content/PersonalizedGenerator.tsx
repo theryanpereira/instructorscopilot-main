@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { UploadBoxBig } from "../ui/upload-box-big";
 import { UploadBoxSmall } from "../ui/upload-box-small";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ContentRequest {
   topic: string;
@@ -18,151 +19,26 @@ interface ContentRequest {
   duration: number;
   teachingStyle: string | null; 
   curriculumFileSelected: boolean; 
-  curriculumFileName: string | null; // New prop for curriculum file name
+  curriculumFileName: string | null;
 }
 
 export function PersonalizedGenerator() {
   const { toast } = useToast();
+  const { user } = useAuth();
   
-  // Async function to save course settings to the backend
-  const saveCourseSettingsToBackend = async (
-    course_title: string,
-    difficulty_level: number | null,
-    duration: number,
-    teaching_style: string | null
-  ) => {
-    // Retrieve user_id from localStorage
-    const user_id = localStorage.getItem('user_id');
-    if (!user_id) {
-      console.error("Error: user_id not found in localStorage. Cannot save course settings.");
-      toast({
-        title: "Error",
-        description: "User session not found. Please log in again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const payload = {
-        user_id: user_id,
-        course_title: course_title,
-        difficulty_level: difficulty_level,
-        duration: duration,
-        teaching_style: teaching_style,
-      };
-
-      // TEST CODE: Log payload before sending
-      console.log("TEST CODE: Sending payload to /save-course-settings:", payload);
-
-      const response = await fetch('/save-course-settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        console.log("Course settings saved to backend successfully.");
-        // TEST CODE: Log successful response
-        console.log("TEST CODE: /save-course-settings success response:", await response.json());
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to save course settings to backend.", errorData);
-        // TEST CODE: Log error response
-        console.error("TEST CODE: /save-course-settings error response:", errorData);
-      }
-    } catch (error) {
-      console.error("Error sending course settings to backend:", error);
-      // TEST CODE: Log catch error
-      console.error("TEST CODE: Error in saveCourseSettingsToBackend catch block:", error);
-    }
-  };
-
-  // File validation handlers
-  const handleFileChange = async (e, allowedTypes, id) => { // Changed 'label' to 'id'
-    console.log(`handleFileChange called for id: ${id}`);
-    const file = e.target.files?.[0];
-    console.log("Selected file:", file);
-
-    if (id === 'curriculum') { // Check against id
-      const newFileSelected = !!file;
-      const newFileName = file ? file.name : null;
-
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-          const response = await fetch('/upload-curriculum/', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            toast({
-              title: "Upload Successful",
-              description: "",
-            });
-          } else {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || "File upload failed.");
-          }
-        } catch (error) {
-          toast({
-            title: "Upload Failed",
-            description: `Error uploading file: ${error.message}`,
-            variant: 'destructive',
-          });
-          e.target.value = ''; // Clear the input field on error
-          setContentRequest(prev => ({ ...prev, curriculumFileSelected: false, curriculumFileName: null }));
-          return;
-        }
-      }
-
-      setContentRequest(prev => {
-        console.log(`Updating curriculum state: selected=${newFileSelected}, name=${newFileName}`);
-        return {
-          ...prev, 
-          curriculumFileSelected: newFileSelected,
-          curriculumFileName: newFileName,
-        };
-      });
-    }
-    if (file && !allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) { // Changed 'id' to 'type' here
-      console.log("File validation failed for:", file.name);
-      toast({
-        title: 'Invalid file type',
-        description: `Please upload a valid ${id} file (${allowedTypes.join(', ')})`,
-        variant: 'destructive',
-      });
-      e.target.value = '';
-      // Clear file name if invalid
-      if (id === 'curriculum') { // Check against id
-        setContentRequest(prev => {
-          console.log("Clearing curriculum state due to invalid file.");
-          return { ...prev, curriculumFileSelected: false, curriculumFileName: null };
-        });
-      }
-    } else if (file) {
-      console.log("File validation passed for:", file.name);
-    }
-  };
-
   const [contentRequest, setContentRequest] = useState<ContentRequest>({
     topic: '',
     contentType: 'lesson',
     difficulty: null,
     duration: 0,
     teachingStyle: null,
-    curriculumFileSelected: false, // Initialize to false
-    curriculumFileName: null, // Initialize file name
+    curriculumFileSelected: false,
+    curriculumFileName: null,
   });
 
   const [generatedContent, setGeneratedContent] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   // Derived state to check if all mandatory fields are filled
   const canGenerate = 
@@ -170,7 +46,55 @@ export function PersonalizedGenerator() {
     contentRequest.difficulty !== null &&
     contentRequest.teachingStyle !== null &&
     contentRequest.curriculumFileSelected &&
-    contentRequest.duration > 0; // Added check for duration
+    contentRequest.duration > 0;
+
+  // File validation handler
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, allowedTypes: string[], label: string) => {
+    console.log(`handleFileChange called for: ${label}`);
+    const file = e.target.files?.[0];
+    console.log("Selected file:", file);
+
+    if (!file) {
+      setContentRequest(prev => ({
+        ...prev,
+        curriculumFileSelected: false,
+        curriculumFileName: null,
+      }));
+      setUploadedFile(null);
+      return;
+    }
+
+    // Validate file type
+    if (!allowedTypes.some(type => file.name.toLowerCase().endsWith(type))) {
+      console.log("File validation failed for:", file.name);
+      toast({
+        title: 'Invalid file type',
+        description: `Please upload a valid file (${allowedTypes.join(', ')})`,
+        variant: 'destructive',
+      });
+      e.target.value = '';
+      setContentRequest(prev => ({
+        ...prev,
+        curriculumFileSelected: false,
+        curriculumFileName: null,
+      }));
+      setUploadedFile(null);
+      return;
+    }
+
+    console.log("File validation passed for:", file.name);
+    setUploadedFile(file);
+    setContentRequest(prev => ({
+      ...prev,
+      curriculumFileSelected: true,
+      curriculumFileName: file.name,
+    }));
+
+    toast({
+      title: "File Selected",
+      description: `${file.name} is ready to upload`,
+    });
+  };
 
   const generatePersonalizedContent = async () => {
     if (!canGenerate) {
@@ -182,53 +106,138 @@ export function PersonalizedGenerator() {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to generate content.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!uploadedFile) {
+      toast({
+        title: "File Required",
+        description: "Please select a curriculum file before generating content.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
-      // Save course settings to the backend before generating content
-      await saveCourseSettingsToBackend(
-        contentRequest.topic,
-        contentRequest.difficulty,
-        contentRequest.duration,
-        contentRequest.teachingStyle
-      );
+      // Step 1: Upload curriculum and create config
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      formData.append('user_name', user.user_metadata?.full_name || user.email || 'Unknown User');
+      formData.append('user_id', user.email || user.id);
+      formData.append('course_topic', contentRequest.topic);
+      formData.append('no_of_weeks', contentRequest.duration.toString());
+      formData.append('difficulty_level', getDifficultyLabel(contentRequest.difficulty));
+      formData.append('teaching_style', getTeachingStyleLabel(contentRequest.teachingStyle));
 
-      // Simulate AI content generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockContent = `# ${contentRequest.topic}
+      console.log('Uploading curriculum with data:', {
+        user_name: user.user_metadata?.full_name || user.email || 'Unknown User',
+        user_id: user.email || user.id,
+        course_topic: contentRequest.topic,
+        no_of_weeks: contentRequest.duration,
+        difficulty_level: getDifficultyLabel(contentRequest.difficulty),
+        teaching_style: getTeachingStyleLabel(contentRequest.teachingStyle)
+      });
 
-## Learning Objectives
-This ${contentRequest.contentType} will help you:
+      const uploadResponse = await fetch('http://localhost:5000/upload-curriculum/', {
+        method: 'POST',
+        body: formData,
+      });
 
-- Understand the core concepts of ${contentRequest.topic}
-- Apply knowledge through targeted exercises
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.detail || "File upload failed.");
+      }
 
-## Content Overview
-This lesson includes diagrams, charts, and visual examples to help you see the concepts clearly.
+      const uploadResult = await uploadResponse.json();
+      console.log('Upload successful:', uploadResult);
 
-## Practice Activities
-- Complete written exercises
-- Analyze text-based case studies
-- Write reflective summaries
+      toast({
+        title: "Upload Successful",
+        description: "Starting content generation...",
+      });
 
-## Next Steps
-Continue building on this foundation by exploring advanced topics.`;
+      // Step 2: Generate content
+      const generateResponse = await fetch('http://localhost:5000/generate-content/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      setGeneratedContent(mockContent);
+      if (!generateResponse.ok) {
+        const errorData = await generateResponse.json();
+        throw new Error(errorData.detail || "Content generation failed.");
+      }
+
+      const generateResult = await generateResponse.json();
+      console.log('Generation successful:', generateResult);
+
+      // Create a summary of generated content
+      const contentSummary = `# ${contentRequest.topic} - Course Generation Complete
+
+## Generation Summary
+✅ Content generation completed successfully!
+📁 Generated ${generateResult.total_files} files
+
+## Generated Files:
+${generateResult.generated_files.map((file: any) => `- ${file.name} (${(file.size / 1024).toFixed(1)} KB)`).join('\n')}
+
+## Course Configuration:
+- **Topic**: ${contentRequest.topic}
+- **Duration**: ${contentRequest.duration} weeks
+- **Difficulty**: ${getDifficultyLabel(contentRequest.difficulty)}
+- **Teaching Style**: ${getTeachingStyleLabel(contentRequest.teachingStyle)}
+- **User**: ${user.user_metadata?.full_name || user.email}
+
+## Next Steps:
+1. Review the generated course materials
+2. Customize content as needed
+3. Export and share with students
+
+The complete course content has been generated and saved. You can find all materials in your course dashboard.`;
+
+      setGeneratedContent(contentSummary);
       
       toast({
-        title: "Content Generated",
-        description: "Personalized content has been created successfully",
+        title: "Content Generated Successfully!",
+        description: `Generated ${generateResult.total_files} course files`,
       });
-    } catch (error) {
+
+    } catch (error: any) {
+      console.error('Generation error:', error);
       toast({
         title: "Generation Failed",
-        description: `Failed to generate content: ${error.message}`,
+        description: error.message || "Failed to generate content",
         variant: "destructive"
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const getDifficultyLabel = (difficulty: number | null): string => {
+    switch (difficulty) {
+      case 1: return "Foundational";
+      case 2: return "Intermediate";
+      case 3: return "Advanced";
+      default: return "Unknown";
+    }
+  };
+
+  const getTeachingStyleLabel = (style: string | null): string => {
+    switch (style) {
+      case "exploratory": return "Exploratory & Guided";
+      case "project": return "Project-Based / Hands-On";
+      case "conceptual": return "Conceptual & Conversational";
+      default: return "Unknown";
     }
   };
 
@@ -249,175 +258,100 @@ Continue building on this foundation by exploring advanced topics.`;
               <Target className="h-5 w-5 text-foreground" />
               Course Structure & Teaching style
             </CardTitle>
+            <CardDescription>
+              Define your course topic, duration, and preferred teaching approach
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <UploadBoxSmall
-              id="curriculum"
-              label="Upload curriculum (mandatory)"
-              fileTypesText="Upload .pdf or .docx file"
-              allowedTypes={['.pdf', '.docx']}
-              onFileChange={handleFileChange}
-              fileName={contentRequest.curriculumFileName} // Pass the file name
-            />
-
-            {/* Teaching Style Select */}
             <div className="space-y-2">
-              <Label htmlFor="teaching-style">Teaching style <span className="text-red-500">*</span></Label>
-              <Select
-                value={contentRequest.teachingStyle || ''}
-                onValueChange={value => setContentRequest(prev => ({ ...prev, teachingStyle: value }))}
-              >
-                <SelectTrigger id="teaching-style">
-                  <SelectValue placeholder="Select a teaching style" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="exploratory-guided" className="font-bold">Exploratory & Guided</SelectItem>
-                  <SelectItem value="project-based" className="font-bold">Project-Based / Hands-On</SelectItem>
-                  <SelectItem value="conceptual-conversational" className="font-bold">Conceptual & Conversational</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Teaching Style Descriptions */}
-            <div className="space-y-4 text-sm">
-              <p className="font-semibold text-foreground">Teaching style descriptions:</p>
-              <p>
-                <span className="font-semibold text-foreground">Exploratory & Guided:</span> Encourage curiosity, pose questions, and guide learners to discover insights through problems or case studies
-              </p>
-              <p>
-                <span className="font-semibold text-foreground">Project-Based / Hands-On:</span> Focus on real-world tasks, projects, or examples. Ideal for teaching by doing and skill development.
-              </p>
-              <p>
-                <span className="font-semibold text-foreground">Conceptual & Conversational:</span> Break down complex ideas using analogies and clear, friendly language. Great for simplifying tough concepts
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Content Request and Output - now on the right */}
-        <Card> {/* Content Requirements Card */}
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-foreground" />
-              Course Details & Scope
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Topic for Content (Optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="topic-for-content">Course topic or title <span className="text-red-500">*</span></Label>
-              <Textarea 
-                id="topic-for-content"
-                placeholder="E.g., Introduction to Quantum Physics, Basics of Machine Learning, History of Ancient Rome"
-                rows={1}
+              <Label htmlFor="topic">
+                Course Topic <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="topic"
+                placeholder="e.g., Introduction to React Development"
                 value={contentRequest.topic}
                 onChange={(e) => setContentRequest(prev => ({ ...prev, topic: e.target.value }))}
               />
             </div>
 
-            {/* Content Difficulty */}
             <div className="space-y-2">
-              <Label htmlFor="difficulty">Content difficulty <span className="text-red-500">*</span></Label>
-              <Select
-                value={contentRequest.difficulty !== null ? contentRequest.difficulty.toString() : ''}
-                onValueChange={value => {
-                  let difficulty: number | null = null;
-                  if (value === '1') difficulty = 1;
-                  else if (value === '2') difficulty = 2;
-                  else if (value === '3') difficulty = 3;
-                  setContentRequest(prev => ({ ...prev, difficulty }));
-                }}
+              <Label htmlFor="duration">
+                Course Duration (weeks) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="duration"
+                type="number"
+                min="1"
+                max="52"
+                value={contentRequest.duration}
+                onChange={(e) => setContentRequest(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="difficulty">
+                Difficulty Level <span className="text-red-500">*</span>
+              </Label>
+              <Select 
+                value={contentRequest.difficulty?.toString() || ''} 
+                onValueChange={(value) => setContentRequest(prev => ({ ...prev, difficulty: parseInt(value) }))}
               >
-                <SelectTrigger id="difficulty">
+                <SelectTrigger>
                   <SelectValue placeholder="Select difficulty level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1" className="font-bold">Foundational</SelectItem>
-                  <SelectItem value="2" className="font-bold">Intermediate</SelectItem>
-                  <SelectItem value="3" className="font-bold">Advanced</SelectItem>
+                  <SelectItem value="1">Foundational</SelectItem>
+                  <SelectItem value="2">Intermediate</SelectItem>
+                  <SelectItem value="3">Advanced</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Difficulty Descriptions */}
-            <div className="space-y-4 text-sm">
-              <p className="font-semibold text-foreground">Difficulty levels</p>
-              <p>
-                <span className="font-semibold text-foreground">Foundational:</span> No prior knowledge needed. Teaches core concepts, terms, and workflows with relatable examples and visuals. Ideal for first-timers or early learners.
-              </p>
-              <p>
-                <span className="font-semibold text-foreground">Intermediate:</span> Assumes basic familiarity. Builds skills through applied understanding, structured breakdowns, and real-world use cases. Great for those looking to deepen their grasp.
-              </p>
-              <p>
-                <span className="font-semibold text-foreground">Advanced:</span> Designed for experienced learners. Explores systems, edge cases, research insights, and practical implementation challenges in depth.
-              </p>
+            <div className="space-y-2">
+              <Label htmlFor="teaching-style">
+                Teaching Style <span className="text-red-500">*</span>
+              </Label>
+              <Select 
+                value={contentRequest.teachingStyle || ''} 
+                onValueChange={(value) => setContentRequest(prev => ({ ...prev, teachingStyle: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select teaching style" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="exploratory">Exploratory & Guided</SelectItem>
+                  <SelectItem value="project">Project-Based / Hands-On</SelectItem>
+                  <SelectItem value="conceptual">Conceptual & Conversational</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </CardContent>
+        </Card>
 
-            
+        {/* Curriculum Upload - now on the right */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-foreground" />
+              Curriculum Materials
+            </CardTitle>
+            <CardDescription>
+              Upload your curriculum documents for analysis
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UploadBoxSmall
+              id="curriculum"
+              label="Upload curriculum document"
+              fileTypesText="Upload PDF file"
+              allowedTypes={['.pdf']}
+              onFileChange={handleFileChange}
+              fileName={contentRequest.curriculumFileName}
+            />
           </CardContent>
         </Card>
       </div>
-
-      {/* Duplicate Optional Inputs Card - Spans full width */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-foreground" />
-            Course Duration Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="course-duration">Please enter the duration for the course in number of weeks</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="course-duration"
-                type="number"
-                placeholder="1-8"
-                value={contentRequest.duration}
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  if (value >= 1 && value <= 8) {
-                    setContentRequest(prev => ({ ...prev, duration: value }));
-                  } else if (e.target.value === '') {
-                    setContentRequest(prev => ({ ...prev, duration: 0 })); // Allow clearing the input
-                  } else {
-                    toast({
-                      title: "Invalid Duration",
-                      description: "Please enter a duration between 1 and 8 weeks.",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-                className="w-16"
-              />
-              <span className="text-foreground text-sm">weeks</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Optional Inputs Card - Spans full width */}
-      {/*
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-foreground" />
-            Optional Inputs
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <UploadBoxSmall
-            id="student-profile-moved"
-            label="Upload student profiles"
-            fileTypesText="Upload excel file or .csv file"
-            allowedTypes={['.xlsx', '.csv']}
-            onFileChange={handleFileChange}
-            optional
-          />
-        </CardContent>
-      </Card>
-      */}
 
       {/* Generated Content - now below both panels, centered and full width */}
       <div className="flex justify-center">

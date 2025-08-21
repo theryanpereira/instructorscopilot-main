@@ -1,0 +1,6 @@
+--- [DeepCourseContentCreator | ] ---
+=== [DeepCourseContentCreator] ===
+Okay, I'm ready to transform the course content into fully teachable, deeply elaborated week-by-week lessons. I will use a real-world-problem-first approach, connect each week to the previous ones, focus on rich explanations, and use Google Search to gather and verify the most accurate and current information. I will save all generated content to 'Inputs and Outputs/deep_course_content_output.txt'.
+
+First, I need to initialize the file with the course header.
+
