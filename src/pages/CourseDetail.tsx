@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Download, ArrowLeft } from "lucide-react";
-
-const API_BASE = "https://instructorscopilot-main.onrender.com";
+import { API_BASE } from "@/lib/config";
 
 type FileItem = {
   name: string;

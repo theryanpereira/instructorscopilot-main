@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UploadBoxBig } from "../ui/upload-box-big";
 import { UploadBoxSmall } from "../ui/upload-box-small";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_BASE } from "@/lib/config";
 
 interface ContentRequest {
   topic: string;
@@ -148,7 +149,7 @@ export function PersonalizedGenerator() {
         teaching_style: getTeachingStyleLabel(contentRequest.teachingStyle)
       });
 
-      const uploadResponse = await fetch('https://instructorscopilot-main.onrender.com/upload-curriculum/', {
+      const uploadResponse = await fetch(`${API_BASE}/upload-curriculum/`, {
         method: 'POST',
         body: formData,
       });
@@ -167,7 +168,7 @@ export function PersonalizedGenerator() {
       });
 
       // Step 2: Generate content
-      const generateResponse = await fetch('https://instructorscopilot-main.onrender.com/generate-content/', {
+      const generateResponse = await fetch(`${API_BASE}/generate-content/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -184,7 +185,7 @@ export function PersonalizedGenerator() {
 
       // Step 3: Fetch real preview text
       try {
-        const previewResp = await fetch('https://instructorscopilot-main.onrender.com/course-material/preview');
+        const previewResp = await fetch(`${API_BASE}/course-material/preview`);
         if (previewResp.ok) {
           const previewData = await previewResp.json();
           setGeneratedContent(previewData.preview || '');

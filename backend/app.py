@@ -207,9 +207,23 @@ async def generate_content():
             # Check for generated content (regardless of return code, some scripts may have warnings but still generate files)
             generated_files = []
             output_dir = UPLOAD_DIR
-            
+
+            # Look for files directly under root
             if output_dir.exists():
                 for file_path in output_dir.glob("*"):
+                    if file_path.is_file() and file_path.suffix in ['.txt', '.docx', '.pdf', '.pptx']:
+                        generated_files.append({
+                            "name": file_path.name,
+                            "path": str(file_path),
+                            "size": file_path.stat().st_size
+                        })
+
+            # Also scan known subdirectories used by generators
+            for sub in ["course material", "quizzes", "ppts", "flashcards"]:
+                subdir = output_dir / sub
+                if not subdir.exists():
+                    continue
+                for file_path in subdir.glob("*"):
                     if file_path.is_file() and file_path.suffix in ['.txt', '.docx', '.pdf', '.pptx']:
                         generated_files.append({
                             "name": file_path.name,

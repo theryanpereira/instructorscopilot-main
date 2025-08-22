@@ -4,8 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, BookOpen, Clock, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE = "https://instructorscopilot-main.onrender.com";
+import { API_BASE } from "@/lib/config";
 
 type CourseCard = {
   slug: string;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Users, FileText, TrendingUp, Sparkles, Clock, Loader2, Download } from "lucide-react";
+import { API_BASE } from "@/lib/config";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ interface ListedFile {
   ext?: string;
 }
 
-const API_BASE = "https://instructorscopilot-main.onrender.com";
+// Using centralized API base from config
 
 export default function Dashboard() {
   const [active, setActive] = useState<TabKey>("course-material");

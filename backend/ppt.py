@@ -381,7 +381,7 @@ def main():
     weeks = _parse_weeks_simple(combined_content)
 
     # Output dir
-    out_dir = os.path.join("Inputs and Outputs", "ppt")
+    out_dir = os.path.join("Inputs and Outputs", "ppts")
     os.makedirs(out_dir, exist_ok=True)
 
     # Generate one PPT per week
