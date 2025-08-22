@@ -17,6 +17,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
+import CourseDetail from "./pages/CourseDetail";
 import { Layout } from "@/components/layout/Layout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/create" element={<Create />} />
                 <Route path="/courses" element={<Courses />} />
+                <Route path="/courses/:slug" element={<CourseDetail />} />
                 <Route path="/students" element={<Students />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>

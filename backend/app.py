@@ -43,6 +43,9 @@ app.add_middleware(
 # Ensure directories exist
 UPLOAD_DIR = Path("Inputs and Outputs")
 UPLOAD_DIR.mkdir(exist_ok=True)
+# Also ensure known category subdirectories exist to avoid downstream issues
+for sub in ["course material", "quizzes", "ppts", "flashcards"]:
+    (UPLOAD_DIR / sub).mkdir(exist_ok=True)
 
 @app.get("/")
 async def root():
@@ -128,6 +131,14 @@ async def generate_content():
         if not pdf_file_path.exists():
             raise HTTPException(status_code=400, detail="No curriculum PDF found. Please upload curriculum first.")
         
+        # Remove any previous completion marker to signal new run
+        try:
+            marker = UPLOAD_DIR / "generation_complete.json"
+            if marker.exists():
+                marker.unlink()
+        except Exception as e:
+            logger.warning(f"Failed clearing generation_complete.json: {e}")
+
         # Resolve backend directory and select script per platform
         backend_dir = Path(__file__).resolve().parent
         if platform.system() == "Windows":
@@ -210,6 +221,16 @@ async def generate_content():
             success = result.returncode == 0 or len(generated_files) > 0
             
             if success:
+                # Write completion marker
+                try:
+                    marker = UPLOAD_DIR / "generation_complete.json"
+                    with open(marker, "w", encoding="utf-8") as f:
+                        json.dump({
+                            "completed": True,
+                            "completed_at": datetime.now().isoformat()
+                        }, f)
+                except Exception as e:
+                    logger.warning(f"Failed to write generation_complete.json: {e}")
                 return JSONResponse(
                     status_code=200,
                     content={
@@ -335,6 +356,19 @@ def _list_files_in_dir(directory: Path) -> List[Dict]:
     items.sort(key=lambda x: x["modified"], reverse=True)
     return items
 
+@app.get("/generation/status")
+async def generation_status():
+    """Return whether generation has completed, by checking a marker file."""
+    marker = UPLOAD_DIR / "generation_complete.json"
+    if marker.exists():
+        try:
+            with open(marker, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return {"completed": bool(data.get("completed", False)), "completed_at": data.get("completed_at")}
+        except Exception:
+            return {"completed": True, "completed_at": None}
+    return {"completed": False, "completed_at": None}
+
 @app.get("/course-material/preview")
 async def get_course_material_preview():
     """
@@ -349,7 +383,8 @@ async def get_course_material_preview():
     # Fallback: any txt in root UPLOAD_DIR
     candidates += list(UPLOAD_DIR.glob("*.txt"))
     if not candidates:
-        raise HTTPException(status_code=404, detail="No course material preview available yet")
+        # Return empty preview gracefully instead of 404
+        return {"file": None, "path": None, "preview": ""}
     # pick latest by mtime
     latest = max(candidates, key=lambda p: p.stat().st_mtime)
     try:
@@ -377,3 +412,94 @@ async def download_file(category: str, filename: str):
     if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path=str(file_path), filename=filename)
+
+def _slugify(name: str) -> str:
+    base = Path(name).stem
+    return "-".join(base.strip().lower().replace("_", " ").split())
+
+@app.get("/courses")
+async def list_courses():
+    """Group generated content into courses based on files in 'course material'."""
+    cm_dir = _safe_category_to_dir("course-material")
+    if not cm_dir.exists():
+        return {"courses": [], "total": 0}
+    courses: Dict[str, Dict] = {}
+    # Identify courses from course material files (txt/docx/pdf)
+    for p in cm_dir.iterdir():
+        if p.is_file() and p.suffix.lower() in [".txt", ".docx", ".pdf"]:
+            stem = p.stem
+            slug = _slugify(stem)
+            info = courses.setdefault(slug, {
+                "slug": slug,
+                "title": stem,
+                "updated": datetime.fromtimestamp(p.stat().st_mtime).isoformat(),
+                "categories": {"course-material": 0, "quizzes": 0, "ppts": 0, "flashcards": 0},
+            })
+            info["categories"]["course-material"] += 1
+            # Track latest update
+            ts = datetime.fromtimestamp(p.stat().st_mtime).isoformat()
+            if ts > info["updated"]:
+                info["updated"] = ts
+    # Count across other categories by prefix match
+    for cat in ["quizzes", "ppts", "flashcards"]:
+        d = _safe_category_to_dir(cat)
+        if not d.exists():
+            continue
+        for p in d.iterdir():
+            if not p.is_file():
+                continue
+            stem = p.stem
+            # attempt to map to a known course by checking if any course title is a prefix of stem
+            for slug, info in courses.items():
+                title_stem = info["title"]
+                if stem.lower().startswith(title_stem.lower()):
+                    info["categories"][cat] += 1
+                    ts = datetime.fromtimestamp(p.stat().st_mtime).isoformat()
+                    if ts > info["updated"]:
+                        info["updated"] = ts
+                    break
+    list_courses_resp = sorted(courses.values(), key=lambda x: x["updated"], reverse=True)
+    return {"courses": list_courses_resp, "total": len(list_courses_resp)}
+
+@app.get("/courses/{slug}")
+async def course_detail(slug: str):
+    """Return files per category for the given course slug."""
+    # Find matching course title from slug by scanning course material
+    cm_dir = _safe_category_to_dir("course-material")
+    if not cm_dir.exists():
+        raise HTTPException(status_code=404, detail="No courses available")
+    title = None
+    for p in cm_dir.iterdir():
+        if p.is_file():
+            if _slugify(p.stem) == slug:
+                title = p.stem
+                break
+    if not title:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    def collect(cat: str) -> List[Dict]:
+        dirp = _safe_category_to_dir(cat)
+        out: List[Dict] = []
+        if not dirp.exists():
+            return out
+        for f in dirp.iterdir():
+            if f.is_file() and f.stem.lower().startswith(title.lower()):
+                out.append({
+                    "name": f.name,
+                    "size": f.stat().st_size,
+                    "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                    "ext": f.suffix.lower(),
+                    "download_url": f"/download/{cat}/{f.name}",
+                })
+        out.sort(key=lambda x: x["modified"], reverse=True)
+        return out
+
+    result = {
+        "slug": slug,
+        "title": title,
+        "course_material": collect("course-material"),
+        "quizzes": collect("quizzes"),
+        "ppts": collect("ppts"),
+        "flashcards": collect("flashcards"),
+    }
+    return result
