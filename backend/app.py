@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 import os
 import json
 import shutil
@@ -8,7 +8,7 @@ import subprocess
 import asyncio
 import platform
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict
 import logging
 from datetime import datetime
 
@@ -298,3 +298,82 @@ if __name__ == "__main__":
     # Use PORT environment variable for Render, fallback to 5000
     port = int(os.environ.get("PORT", 5000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+# ----------------------
+# Additional Content APIs
+# ----------------------
+
+def _safe_category_to_dir(category: str) -> Path:
+    """Map category to a safe subdirectory under 'Inputs and Outputs'."""
+    mapping = {
+        "course-material": "course material",
+        "quizzes": "quizzes",
+        "ppts": "ppts",
+        "flashcards": "flashcards",
+    }
+    sub = mapping.get(category)
+    if not sub:
+        raise HTTPException(status_code=400, detail="Invalid category")
+    return UPLOAD_DIR / sub
+
+def _list_files_in_dir(directory: Path) -> List[Dict]:
+    if not directory.exists():
+        return []
+    items: List[Dict] = []
+    for p in directory.iterdir():
+        if p.is_file():
+            try:
+                items.append({
+                    "name": p.name,
+                    "size": p.stat().st_size,
+                    "modified": datetime.fromtimestamp(p.stat().st_mtime).isoformat(),
+                    "ext": p.suffix.lower(),
+                })
+            except Exception:
+                continue
+    # sort newest first
+    items.sort(key=lambda x: x["modified"], reverse=True)
+    return items
+
+@app.get("/course-material/preview")
+async def get_course_material_preview():
+    """
+    Return text content preview from the most recent .txt in 'Inputs and Outputs/course material'.
+    Fallback to any .txt in 'Inputs and Outputs' if none found.
+    """
+    # Prefer course material folder
+    cm_dir = _safe_category_to_dir("course-material")
+    candidates: List[Path] = []
+    if cm_dir.exists():
+        candidates += list(cm_dir.glob("*.txt"))
+    # Fallback: any txt in root UPLOAD_DIR
+    candidates += list(UPLOAD_DIR.glob("*.txt"))
+    if not candidates:
+        raise HTTPException(status_code=404, detail="No course material preview available yet")
+    # pick latest by mtime
+    latest = max(candidates, key=lambda p: p.stat().st_mtime)
+    try:
+        text = latest.read_text(encoding="utf-8", errors="replace")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read preview: {e}")
+    return {"file": latest.name, "path": str(latest), "preview": text}
+
+@app.get("/files/{category}")
+async def list_category_files(category: str):
+    """
+    List files for a given category: course-material | quizzes | ppts | flashcards
+    """
+    directory = _safe_category_to_dir(category)
+    files = _list_files_in_dir(directory)
+    return {"category": category, "directory": str(directory), "files": files, "total": len(files)}
+
+@app.get("/download/{category}/{filename}")
+async def download_file(category: str, filename: str):
+    """Download a file by category and filename."""
+    if "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    directory = _safe_category_to_dir(category)
+    file_path = directory / filename
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path=str(file_path), filename=filename)

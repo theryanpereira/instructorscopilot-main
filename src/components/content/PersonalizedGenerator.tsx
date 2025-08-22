@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Wand2, Upload, BookOpen, Target, Brain, Sparkles, FilePlus, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface ContentRequest {
 export function PersonalizedGenerator() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [contentRequest, setContentRequest] = useState<ContentRequest>({
     topic: '',
@@ -180,32 +182,22 @@ export function PersonalizedGenerator() {
       const generateResult = await generateResponse.json();
       console.log('Generation successful:', generateResult);
 
-      // Create a summary of generated content
-      const contentSummary = `# ${contentRequest.topic} - Course Generation Complete
+      // Step 3: Fetch real preview text
+      try {
+        const previewResp = await fetch('https://instructorscopilot-main.onrender.com/course-material/preview');
+        if (previewResp.ok) {
+          const previewData = await previewResp.json();
+          setGeneratedContent(previewData.preview || '');
+        } else {
+          // Fallback to summary if preview not available
+          const contentSummary = `# ${contentRequest.topic} - Course Generation Complete\n\n✅ Content generated. Preview is not yet available.`;
+          setGeneratedContent(contentSummary);
+        }
+      } catch (e) {
+        const contentSummary = `# ${contentRequest.topic} - Course Generation Complete\n\n✅ Content generated. Preview fetch failed.`;
+        setGeneratedContent(contentSummary);
+      }
 
-## Generation Summary
-✅ Content generation completed successfully!
-📁 Generated ${generateResult.total_files} files
-
-## Generated Files:
-${generateResult.generated_files.map((file: any) => `- ${file.name} (${(file.size / 1024).toFixed(1)} KB)`).join('\n')}
-
-## Course Configuration:
-- **Topic**: ${contentRequest.topic}
-- **Duration**: ${contentRequest.duration} weeks
-- **Difficulty**: ${getDifficultyLabel(contentRequest.difficulty)}
-- **Teaching Style**: ${getTeachingStyleLabel(contentRequest.teachingStyle)}
-- **User**: ${user.user_metadata?.full_name || user.email}
-
-## Next Steps:
-1. Review the generated course materials
-2. Customize content as needed
-3. Export and share with students
-
-The complete course content has been generated and saved. You can find all materials in your course dashboard.`;
-
-      setGeneratedContent(contentSummary);
-      
       toast({
         title: "Content Generated Successfully!",
         description: `Generated ${generateResult.total_files} course files`,
@@ -402,6 +394,10 @@ The complete course content has been generated and saved. You can find all mater
                     </Button>
                     <Button variant="outline" size="sm">
                       Export Content
+                    </Button>
+                    <Button variant="default" size="sm" onClick={() => navigate('/dashboard')}>
+                      <BookOpen className="mr-2 h-4 w-4 text-foreground" />
+                      Course Material
                     </Button>
                   </div>
                 </div>
