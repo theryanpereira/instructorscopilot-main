@@ -367,15 +367,12 @@ def read_course_content_files():
     else:
         print(f"⚠️ Planner file not found: {planner_file}")
     
-    # Read from copilot folder "Inputs and Outputs"
-    copilot_dir_path = pathlib.Path("copilot/Inputs and Outputs")
-    
-    # Try to read deep course content output
-    deep_file = copilot_dir_path / "deep_course_content_output.txt"
+    # Try to read deep course content output (now directly from home_dir_path)
+    deep_file = home_dir_path / "deep_course_content_output.txt" # First try specific name
     if not deep_file.exists():
         # Try alternative filename
-        deep_file = copilot_dir_path / "deep_agent_output.txt"
-    
+        deep_file = home_dir_path / "deep_agent_output.txt" # Then try generic name
+
     if deep_file.exists():
         try:
             with open(deep_file, 'r', encoding='utf-8') as f:
@@ -384,7 +381,7 @@ def read_course_content_files():
         except Exception as e:
             print(f"❌ Error reading {deep_file}: {e}")
     else:
-        print(f"⚠️ Deep content file not found in: {copilot_dir_path}")
+        print(f"⚠️ Deep content file not found in: {home_dir_path}")
     
     return planner_content, deep_content
 
