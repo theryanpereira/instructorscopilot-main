@@ -389,6 +389,16 @@ async def get_course_material_preview():
     Return text content preview from the most recent .txt in 'Inputs and Outputs/course material'.
     Fallback to any .txt in 'Inputs and Outputs' if none found.
     """
+    # First, check for deep_agent_output.txt explicitly
+    deep_agent_output_path = UPLOAD_DIR / "deep_agent_output.txt"
+    if deep_agent_output_path.exists():
+        try:
+            text = deep_agent_output_path.read_text(encoding="utf-8", errors="replace")
+            return {"file": deep_agent_output_path.name, "path": str(deep_agent_output_path), "preview": text}
+        except Exception as e:
+            logger.error(f"Failed to read deep_agent_output.txt: {e}")
+            # Fallback to normal logic if reading fails
+    
     # Prefer course material folder
     cm_dir = _safe_category_to_dir("course-material")
     candidates: List[Path] = []
